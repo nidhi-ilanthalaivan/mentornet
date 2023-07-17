@@ -40,8 +40,9 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   nonzero_v = nn.Parameter(torch.zeros([]).to(dtype=torch.float32), requires_grad = False )
   nonzero_v.name = 'data_util/nonzero_v'
       
+                          
+  rounded_v = torch.maximum(v - epsilon, torch.tensor(0.0))
 
-  rounded_v = tf.maximum(v - epsilon, tf.to_float(0))
 
   # Log data utilization
   nonzero_v = tf.assign_add(nonzero_v, tf.count_nonzero(

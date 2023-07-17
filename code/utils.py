@@ -37,10 +37,9 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   Returns:
     data_util: a tensor of data utilization.
   """
-  nonzero_v = tf.get_variable('data_util/nonzero_v', [],
-                              initializer=tf.zeros_initializer(),
-                              trainable=False,
-                              dtype=tf.float32)
+  nonzero_v = nn.Parameter(torch.zeros([]).to(dtype=torch.float32), requires_grad = False )
+  nonzero_v.name = 'data_util/nonzero_v'
+      
 
   rounded_v = tf.maximum(v - epsilon, tf.to_float(0))
 

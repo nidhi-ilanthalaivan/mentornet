@@ -51,8 +51,7 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   # slim runs extra sessions to log, causing
   # the value lager than 1 (data are fed but the global step is not changed)
   # so we use tf_global_step + 2
-  data_util = (nonzero_v) / tf.to_float(batch_size) / (
-      tf.to_float(tf_global_step) + 2)
+  data_util = (nonzero_v) /  (tf.to_float(tf_global_step) + 2)
   data_util = tf.minimum(data_util, 1)
   tf.stop_gradient(data_util)
 

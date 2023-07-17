@@ -19,6 +19,9 @@ import numpy as np
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
 def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   """Summarizes the samples of non-zero weights during training.

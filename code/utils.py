@@ -113,7 +113,7 @@ def mentornet_nn(input_features,
   """
   batch_size = int(input_features.get_shape()[0])
 
-  losses = tf.reshape(input_features[:, 0], [-1, 1])
+  losses = input_features[:, 0].view(-1,1)
   loss_diffs = tf.reshape(input_features[:, 1], [-1, 1])
   labels = tf.to_int32(tf.reshape(input_features[:, 2], [-1, 1]))
   epochs = tf.to_int32(tf.reshape(input_features[:, 3], [-1, 1]))

@@ -19,7 +19,6 @@
 import torch 
 import torch.nn as nn 
 import torch.nn.functional as F
-import tensorflow.contrib.slim as slim
 
 def truncated_normal(stddev): 
   return torch.nn.init.normal_(torch.empty(stddev.size()), mean = 0, std = stddev)

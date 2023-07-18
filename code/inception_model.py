@@ -16,7 +16,7 @@
 """Contains a variant of the CIFAR-10 model definition."""
 
 
-import tensorflow as tf
+import torch 
 import tensorflow.contrib.slim as slim
 
 trunc_normal = lambda stddev: tf.truncated_normal_initializer(stddev=stddev)

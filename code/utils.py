@@ -45,8 +45,7 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
 
 
   # Log data utilization
-  nonzero_v = tf.assign_add(nonzero_v, tf.count_nonzero(
-      rounded_v, dtype=tf.float32))
+  nonzero_v = torch.count_nonzero(rounded_v, dtype=torch.float32)
 
   # slim runs extra sessions to log, causing
   # the value lager than 1 (data are fed but the global step is not changed)

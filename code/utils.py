@@ -121,9 +121,10 @@ def mentornet_nn(input_features,
     if losses.dim() <= 1:
     num_steps = 1
   else:
-    num_steps = int(losses.size(1))
+    num_steps = int(losses.size(1)) 
+    
 
-  with tf.variable_scope('mentornet'):
+  with torch.no_grad():
     label_embedding = tf.get_variable('label_embedding',
                                       [2, label_embedding_size])
     epoch_embedding = tf.get_variable(

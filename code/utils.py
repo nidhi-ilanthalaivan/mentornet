@@ -53,7 +53,7 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   data_util = (nonzero_v) / tf.to_float(batch_size) / (
       tf.to_float(tf_global_step) + 2)
   data_util = torch.minimum(data_util, torch.tensor(1.0))
-  tf.stop_gradient(data_util)
+  data_util = data_util.detach
 
   slim.summaries.add_scalar_summary(data_util, 'data_util/data_util')
   slim.summaries.add_scalar_summary(tf.reduce_sum(v), 'data_util/batch_sum_v')

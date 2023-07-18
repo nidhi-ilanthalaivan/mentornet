@@ -21,8 +21,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import tensorflow.contrib.slim as slim
 
-trunc_normal = lambda stddev: tf.truncated_normal_initializer(stddev=stddev)
-
+def truncated_normal(stddev): 
+  return torch.nn.init.normal_(torch.empty(stddev.size()), mean = 0, std = stddev)
 
 def cifarnet(images, num_classes=10, is_training=False,
              dropout_keep_prob=0.5,

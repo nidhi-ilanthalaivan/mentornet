@@ -116,7 +116,7 @@ def mentornet_nn(input_features,
   losses = input_features[:, 0].view(-1,1)
   loss_diffs =input_features[:, 1].view(-1, 1)
   labels=input_features[:,2].long().view(-1,1)
-  epochs = tf.to_int32(tf.reshape(input_features[:, 3], [-1, 1]))
+  epochs=input_features[:,3].long().view(-1,1)
   epochs = tf.minimum(epochs, tf.ones([batch_size, 1], dtype=tf.int32) * 99)
 
   if len(losses.get_shape()) <= 1:

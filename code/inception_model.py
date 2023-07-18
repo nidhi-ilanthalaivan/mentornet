@@ -17,6 +17,7 @@
 
 
 import torch 
+import torch.nn as nn
 import tensorflow.contrib.slim as slim
 
 trunc_normal = lambda stddev: tf.truncated_normal_initializer(stddev=stddev)

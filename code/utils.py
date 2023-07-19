@@ -131,12 +131,12 @@ def mentornet_nn(input_features,
     forward_cell = nn.LSTMCell(1, bias = False)
     backward_cell = nn.LSTMCell(1, bias = False)
 
-    _, out_state_fw, out_state_bw = tf.contrib.rnn.static_bidirectional_rnn(
-        forward_cell,
-        backward_cell,
-        inputs=lstm_inputs,
-        dtype=tf.float32,
-        sequence_length=np.ones(batch_size) * num_steps)
+   out_state_fw = []
+   out_state_bw = []
+   hidden_fw = torch.zeros(batch_size, forward_cell.hidden_size)
+   hidden_bw = torch.zeros(batch_size,backward_cell.hidden_size)
+   cell_fw = torch.zeros(batch_size,forward_cell.hidden_size)
+   cell_bw = torch.zeros(batch_size, backward_cell.hidden_size)
 
     label_inputs = tf.squeeze(tf.nn.embedding_lookup(label_embedding, labels))
     epoch_inputs = tf.squeeze(tf.nn.embedding_lookup(epoch_embedding, epochs))

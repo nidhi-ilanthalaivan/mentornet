@@ -128,7 +128,7 @@ def mentornet_nn(input_features,
     lstm_inputs = lstm_inputs.squeeze()
     lstm_inputs = [lstm_inputs]
 
-    forward_cell = tf.contrib.rnn.BasicLSTMCell(1, forget_bias=0.0)
+    forward_cell = nn.LSTMCell(1, bias = False)
     backward_cell = tf.contrib.rnn.BasicLSTMCell(1, forget_bias=0.0)
 
     _, out_state_fw, out_state_bw = tf.contrib.rnn.static_bidirectional_rnn(

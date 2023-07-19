@@ -16,14 +16,13 @@
 """Utility functions for training the MentorNet models."""
 
 import numpy as np
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
+def summarize_data_utilization(v, global_step, batch_size, epsilon=0.001):
   """Summarizes the samples of non-zero weights during training.
 
   Args:
@@ -50,17 +49,16 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
   # slim runs extra sessions to log, causing
   # the value lager than 1 (data are fed but the global step is not changed)
   # so we use tf_global_step + 2
-  data_util = (nonzero_v) / tf.to_float(batch_size) / (
-      tf.to_float(tf_global_step) + 2)
+  data_util = (nonzero_v) / float(batch_size) / (
+      float(global_step) + 2)
   data_util = torch.minimum(data_util, torch.tensor(1.0))
   data_util = data_util.detach
 
-  data_util = data_util.item()
+   data_util = data_util.item()
    'data_util/data_util'
   batch_sum_v = torch.sum(v).item()
    'data_util/batch_sum_v'
   return data_util
-
 
 def parse_dropout_rate_list(str_list):
   """Parse a comma-separated string to a list.
@@ -111,43 +109,50 @@ def mentornet_nn(input_features,
   Returns:
     v: [batch_size, 1] weight vector.
   """
-  batch_size = int(input_features.get_shape()[0])
+  batch_size = int(input_features.size(0))
 
   losses = input_features[:, 0].view(-1,1)
   loss_diffs =input_features[:, 1].view(-1, 1)
   labels=input_features[:,2].long().view(-1,1)
   epochs=input_features[:,3].long().view(-1,1)
- epochs = torch.min(epochs, torch.ones(batch_size, 1, dtype=torch.int32) * 99)
-    if losses.dim() <= 1:
+  epochs = torch.min(epochs, torch.ones(batch_size, 1, dtype=torch.int32) * 99)
+  if losses.dim() <= 1:
     num_steps = 1
   else:
+    num_steps = int(losses.size(1))
+
+  with torch.no_grad():
     label_embedding = nn.Parameter(torch.empty(2, label_embedding_size))
     epoch_embedding =nn.Parameter(torch.empty(100, epoch_embedding_size), requires_grad=False)
 
     lstm_inputs = torch.stack([losses, loss_diffs], feat_dim=1)
     lstm_inputs = lstm_inputs.squeeze()
-    lstm_inputs = [lstm_inputs]
+    
 
     forward_cell = nn.LSTMCell(1, bias = False)
     backward_cell = nn.LSTMCell(1, bias = False)
+    
+    ## used chatgpt for reference  
+    out_state_fw = []
+    out_state_bw = []
+    hidden_fw = torch.zeros(batch_size, forward_cell.hidden_size)
+    hidden_bw = torch.zeros(batch_size,backward_cell.hidden_size)
+    cell_fw = torch.zeros(batch_size,forward_cell.hidden_size)
+    cell_bw = torch.zeros(batch_size, backward_cell.hidden_size)
 
-   out_state_fw = []
-   out_state_bw = []
-   hidden_fw = torch.zeros(batch_size, forward_cell.hidden_size)
-   hidden_bw = torch.zeros(batch_size,backward_cell.hidden_size)
-   cell_fw = torch.zeros(batch_size,forward_cell.hidden_size)
-   cell_bw = torch.zeros(batch_size, backward_cell.hidden_size)
-   for timestep in range(num_steps):
-    hidden_fw, cell_fw = forward_cell(lstm_inputs[:, timestep],(hidden_fw, cell_fw))
-    hidden_bw, cell_bw = backward_cell(lstm_inputs[:, num_steps - timestep - 1], (hidden_bw, cell_bw))
-    out_state_fw.append(hidden_fw)
-    out_state_bw.append(hidden_bw)
+    for timestep in range(num_steps):
+      hidden_fw, cell_fw = forward_cell(lstm_inputs[:, timestep],(hidden_fw, cell_fw))
+      hidden_bw, cell_bw = backward_cell(lstm_inputs[:, num_steps - timestep - 1], (hidden_bw, cell_bw))
+      out_state_fw.append(hidden_fw)
+      out_state_bw.append(hidden_bw)
 
-  out_state_fw = torch.stack(out_state_fw, dim = 1)
-  out_state_bw = torch.stack(out_state_bw, dim = 1)
-    label_inputs = tf.squeeze(tf.nn.embedding_lookup(label_embedding, labels))
-    epoch_inputs = tf.squeeze(tf.nn.embedding_lookup(epoch_embedding, epochs))
+    out_state_fw = torch.stack(out_state_fw, dim = 1)
+    out_state_bw = torch.stack(out_state_bw, dim = 1)
+    ## END used chatgpt for reference
+   
 
+    label_inputs = label_embedding[labels.squeeze()]
+    epoch_inputs = epoch_embedding[epochs.squeeze()]
     h = tf.concat([out_state_fw[0], out_state_bw[0]], 1)
     feat = tf.concat([label_inputs, epoch_inputs, h], 1)
     feat_dim = int(feat.get_shape()[1])

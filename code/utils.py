@@ -125,7 +125,7 @@ def mentornet_nn(input_features,
     epoch_embedding =nn.Parameter(torch.empty(100, epoch_embedding_size), requires_grad=False)
 
     lstm_inputs = torch.stack([losses, loss_diffs], feat_dim=1)
-    lstm_inputs = tf.squeeze(lstm_inputs)
+    lstm_inputs = lstm_inputs.squeeze()
     lstm_inputs = [lstm_inputs]
 
     forward_cell = tf.contrib.rnn.BasicLSTMCell(1, forget_bias=0.0)

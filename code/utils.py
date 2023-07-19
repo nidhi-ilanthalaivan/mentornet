@@ -143,7 +143,6 @@ def mentornet_nn(input_features,
     out_state_fw.append(hidden_fw)
     out_state_bw.append(hidden_bw)
 
-  out_state_fw = torch.stack(out_state_fw, dim = 1)
   out_state_bw = torch.stack(out_state_bw, dim = 1)
     label_inputs = tf.squeeze(tf.nn.embedding_lookup(label_embedding, labels))
     epoch_inputs = tf.squeeze(tf.nn.embedding_lookup(epoch_embedding, epochs))

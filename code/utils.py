@@ -122,8 +122,7 @@ def mentornet_nn(input_features,
     num_steps = 1
   else:
     label_embedding = nn.Parameter(torch.empty(2, label_embedding_size))
-    epoch_embedding = tf.get_variable(
-        'epoch_embedding', [100, epoch_embedding_size], trainable=False)
+    epoch_embedding =nn.Parameter(torch.empty(100, epoch_embedding_size), requires_grad=False)
 
     lstm_inputs = tf.stack([losses, loss_diffs], axis=1)
     lstm_inputs = tf.squeeze(lstm_inputs)

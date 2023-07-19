@@ -92,6 +92,7 @@ def mentornet_nn(input_features,
                  label_embedding_size=2,
                  epoch_embedding_size=5,
                  num_fc_nodes=20):
+  
   """The neural network form of the MentorNet.
 
   An implementation of the mentornet. The details are in:

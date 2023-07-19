@@ -16,12 +16,18 @@
 """Contains a variant of the CIFAR-10 model definition."""
 
 
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+import torch 
+import torch.nn as nn 
+import torch.nn.functional as F
 
-trunc_normal = lambda stddev: tf.truncated_normal_initializer(stddev=stddev)
+def truncated_normal(stddev): 
+  return torch.nn.init.normal_(torch.empty(stddev.size()), mean = 0, std = stddev)
 
-
+class CifarNet(nn.Module): 
+  def __init__(self, num_classes = 10, dropout_keep_prob = 0.5): 
+    super(CifarNet, self).__init__()
+    self.num_classes = num_classes
+    self.dropout_keep_prob = dropout_keep_prob
 def cifarnet(images, num_classes=10, is_training=False,
              dropout_keep_prob=0.5,
              prediction_fn=slim.softmax,

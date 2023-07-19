@@ -137,6 +137,11 @@ def mentornet_nn(input_features,
    hidden_bw = torch.zeros(batch_size,backward_cell.hidden_size)
    cell_fw = torch.zeros(batch_size,forward_cell.hidden_size)
    cell_bw = torch.zeros(batch_size, backward_cell.hidden_size)
+   for timestep in range(num_steps):
+    hidden_fw, cell_fw = forward_cell(lstm_inputs[:, timestep],(hidden_fw, cell_fw))
+    hidden_bw, cell_bw = backward_cell(lstm_inputs[:, num_steps - timestep - 1], (hidden_bw, cell_bw))
+    out_state_fw.append(hidden_fw)
+    out_state_bw.append(hidden_bw)
 
     label_inputs = tf.squeeze(tf.nn.embedding_lookup(label_embedding, labels))
     epoch_inputs = tf.squeeze(tf.nn.embedding_lookup(epoch_embedding, epochs))

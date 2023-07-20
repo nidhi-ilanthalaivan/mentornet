@@ -32,6 +32,8 @@ class CifarNet(nn.Module):
     self.conv2 = nn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 5, stride = 1, padding = 2) 
     self.pool1 = nn.MaxPool2d(kernel_size = 2, stride = 2)
     self.pool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
+    self.norm1 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k=1.0)
+    self.norm2 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k = 1.0)
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the

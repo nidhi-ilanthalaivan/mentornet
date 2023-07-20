@@ -156,7 +156,8 @@ def mentornet_nn(input_features,
     epoch_inputs = epoch_embedding[epochs.squeeze()]
     h = torch.cat([out_state_fw[:,0], out_state_bw[:,0]], dim = 1)
     ## torch.cat function is used to concatenate tensors along certain dimension and is exact equivalent of tf.concat, the code concatenates first timestep's hidden states from fw and bw directions along the second dimension (dim - 1), which creates tensor h 
-    feat = tf.concat([label_inputs, epoch_inputs, h], 1)
+    feat = torch.cat([label_inputs, epoch_inputs, h], dim = 1)
+    ## basically same as previous line - feat = contains the concatenated values from label_inputsand epoch_inputs and h in that order
     feat_dim = int(feat.get_shape()[1])
 
     fc_1 = tf.add(

@@ -28,10 +28,8 @@ class CifarNet(nn.Module):
     super(CifarNet, self).__init__()
     self.num_classes = num_classes
     self.dropout_keep_prob = dropout_keep_prob
-def cifarnet(images, num_classes=10, is_training=False,
-             dropout_keep_prob=0.5,
-             prediction_fn=slim.softmax,
-             scope='CifarNet'):
+    self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 5, stride = 1, padding = 2)
+    self.conv2 = nn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 5, stride = 1, padding = 2) 
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the

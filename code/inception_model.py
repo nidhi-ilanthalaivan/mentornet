@@ -30,6 +30,8 @@ class CifarNet(nn.Module):
     self.dropout_keep_prob = dropout_keep_prob
     self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 5, stride = 1, padding = 2)
     self.conv2 = nn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 5, stride = 1, padding = 2) 
+    self.pool1 = nn.MaxPool2d(kernel_size = 2, stride = 2)
+    self.pool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the

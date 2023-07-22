@@ -161,10 +161,9 @@ def mentornet_nn(input_features,
     feat_dim = feat.size(1)
     ##pytorch u use .size() to get shape of tensor
 
-    fc_1 = tf.add(
-        tf.matmul(feat, tf.Variable(tf.random_normal([feat_dim,
-                                                      num_fc_nodes]))),
-        tf.Variable(tf.random_normal([num_fc_nodes])))
+    fc_1 = torch.matmul(feat,torch.randn(feat_dim, num_fc_nodes)) + torch.randn(num_fc_nodes)
+    ##with torch.randn(feat_dim,num_fc_nodes), you create tensor of random values drawn from normal distribution with standard deviation 1 and the shape of the tensor is (num_fc_nodes, 1) (this represents the weights for the first fully connected layer (set of parameters that determine influence inputs have on output))
+    ## torch.matmul(fc_1, torch.randn(num_fc_nodes,1)) -- this performs matrix multiplications between output of first layer (fc_1) and weight tensor created prior
     fc_1 = tf.nn.tanh(fc_1)
     # Output layer with linear activation
     out_layer = tf.matmul(

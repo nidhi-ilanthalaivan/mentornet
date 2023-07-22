@@ -167,10 +167,8 @@ def mentornet_nn(input_features,
     fc_1 = torch.tanh(fc_1)
     ## applies hyperbolic tangent activation function to tensor fc_1
     # Output layer with linear activation
-    out_layer = tf.matmul(
-        fc_1,
-        tf.Variable(tf.random_normal([num_fc_nodes, 1]))
-        + tf.Variable(tf.random_normal([1])))
+    out_layer = torch.matmul(fc_1, torch.randn(num_fc_nodes, 1)) + torch.randn(1)
+    ## creates tensor of random values w normal distribution and standard dev 1 - shape is (num_fc_nodes) , matrix multiplication betwene fc_1 and weigh tensor in previous line, torch.randn(1) creates a tensor of random values w normal distribution shape of tensor is 1, which reps bias for output layer and bias tensor is added to matrx multiplication prior
     return out_layer
 
 

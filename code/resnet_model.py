@@ -29,7 +29,9 @@ from collections import namedtuple
 import numpy as np
 
 import torch
-from tensorflow.python.training import moving_averages
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 
 HParams = namedtuple('HParams',

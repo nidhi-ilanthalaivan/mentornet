@@ -110,7 +110,7 @@ class ResNet(nn.Module):
     with tf.variable_scope('unit_3_0'):
       x = res_func(x, filters[2], filters[3], self._stride_arr(strides[2]),
                    activate_before_residual[2])
-    for i in xrange(1, self.hps.num_residual_units):
+    for i in range(1, self.hps.num_residual_units):
       with tf.variable_scope('unit_3_%d' % i):
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 

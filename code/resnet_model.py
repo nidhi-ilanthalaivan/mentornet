@@ -62,7 +62,7 @@ class ResNet(nn.Module):
 
   def build_graph_unused(self):
     """Build a whole graph for the model."""
-    self.global_step = tf.Variable(0, name='global_step', trainable=False)
+    self.global_step = torch.nn.Parameter(torch.tensor(0), trainable=False)
     self.build_model()
     if self.mode == 'train':
       self._build_train_op()

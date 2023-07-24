@@ -119,7 +119,7 @@ class ResNet(nn.Module):
       x = self._relu(x, self.hps.relu_leakiness)
       x = self._global_avg_pool(x)
 
-    with tf.variable_scope('logit'):
+    with torch.no_grad():
       logits = self._fully_connected(x, self.hps.num_classes)
 
     return logits

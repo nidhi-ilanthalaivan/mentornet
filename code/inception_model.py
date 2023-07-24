@@ -99,26 +99,3 @@ def forward(self, x):
   logits = self.logits(x)
   x = self.dropout3(x)
   return logits, end_points 
-cifarnet.default_image_size = 32
-
-
-def cifarnet_arg_scope(weight_decay=0.004):
-  """Defines the default cifarnet argument scope.
-
-  Args:
-    weight_decay: The weight decay to use for regularizing the model.
-
-  Returns:
-    An `arg_scope` to use for the inception v3 model.
-  """
-  with slim.arg_scope(
-      [slim.conv2d],
-      weights_initializer=tf.truncated_normal_initializer(stddev=5e-2),
-      activation_fn=tf.nn.relu):
-    with slim.arg_scope(
-        [slim.fully_connected],
-        biases_initializer=tf.constant_initializer(0.1),
-        weights_initializer=trunc_normal(0.04),
-        weights_regularizer=slim.l2_regularizer(weight_decay),
-        activation_fn=tf.nn.relu) as sc:
-      return sc

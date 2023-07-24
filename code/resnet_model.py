@@ -114,7 +114,7 @@ class ResNet(nn.Module):
       with torch.no_grad():
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 
-    with tf.variable_scope('unit_last'):
+    with torch.no_grad():
       x = self._batch_norm('final_bn', x)
       x = self._relu(x, self.hps.relu_leakiness)
       x = self._global_avg_pool(x)

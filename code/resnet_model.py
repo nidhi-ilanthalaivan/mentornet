@@ -93,7 +93,7 @@ class ResNet(nn.Module):
       filters = [16, 160, 320, 640]
       # Update hps.num_residual_units to 9
 
-    with tf.variable_scope('unit_1_0'):
+    with torch.no_grad():
       x = res_func(x, filters[0], filters[1], self._stride_arr(strides[0]),
                    activate_before_residual[0])
     for i in xrange(1, self.hps.num_residual_units):

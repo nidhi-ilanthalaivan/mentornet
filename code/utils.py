@@ -16,14 +16,13 @@
 """Utility functions for training the MentorNet models."""
 
 import numpy as np
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
+def summarize_data_utilization(v, global_step, batch_size, epsilon=0.001):
   """Summarizes the samples of non-zero weights during training.
 
   Args:
@@ -45,20 +44,21 @@ def summarize_data_utilization(v, tf_global_step, batch_size, epsilon=0.001):
 
 
   # Log data utilization
-  nonzero_v = tf.assign_add(nonzero_v, tf.count_nonzero(
-      rounded_v, dtype=tf.float32))
+  nonzero_v = torch.count_nonzero(rounded_v, dtype=torch.float32)
 
   # slim runs extra sessions to log, causing
   # the value lager than 1 (data are fed but the global step is not changed)
   # so we use tf_global_step + 2
-  data_util = (nonzero_v) /  (tf.to_float(tf_global_step) + 2)
-  data_util = tf.minimum(data_util, 1)
-  tf.stop_gradient(data_util)
+  data_util = (nonzero_v) / float(batch_size) / (
+      float(global_step) + 2)
+  data_util = torch.minimum(data_util, torch.tensor(1.0))
+  data_util = data_util.detach
 
-  slim.summaries.add_scalar_summary(data_util, 'data_util/data_util')
-  slim.summaries.add_scalar_summary(tf.reduce_sum(v), 'data_util/batch_sum_v')
+   data_util = data_util.item()
+   'data_util/data_util'
+  batch_sum_v = torch.sum(v).item()
+   'data_util/batch_sum_v'
   return data_util
-
 
 def parse_dropout_rate_list(str_list):
   """Parse a comma-separated string to a list.
@@ -110,56 +110,65 @@ def mentornet_nn(input_features,
   Returns:
     v: [batch_size, 1] weight vector.
   """
-  batch_size = int(input_features.get_shape()[0])
+  batch_size = int(input_features.size(0))
 
-  losses = tf.reshape(input_features[:, 0], [-1, 1])
-  loss_diffs = tf.reshape(input_features[:, 1], [-1, 1])
-  labels = tf.to_int32(tf.reshape(input_features[:, 2], [-1, 1]))
-  epochs = tf.to_int32(tf.reshape(input_features[:, 3], [-1, 1]))
-  epochs = tf.minimum(epochs, tf.ones([batch_size, 1], dtype=tf.int32) * 99)
-
-  if len(losses.get_shape()) <= 1:
+  losses = input_features[:, 0].view(-1,1)
+  loss_diffs =input_features[:, 1].view(-1, 1)
+  labels=input_features[:,2].long().view(-1,1)
+  epochs=input_features[:,3].long().view(-1,1)
+  epochs = torch.min(epochs, torch.ones(batch_size, 1, dtype=torch.int32) * 99)
+  if losses.dim() <= 1:
     num_steps = 1
   else:
-    num_steps = int(losses.get_shape()[1])
+    num_steps = int(losses.size(1))
 
-  with tf.variable_scope('mentornet'):
-    label_embedding = tf.get_variable('label_embedding',
-                                      [2, label_embedding_size])
-    epoch_embedding = tf.get_variable(
-        'epoch_embedding', [100, epoch_embedding_size], trainable=False)
+  with torch.no_grad():
+    label_embedding = nn.Parameter(torch.empty(2, label_embedding_size))
+    epoch_embedding =nn.Parameter(torch.empty(100, epoch_embedding_size), requires_grad=False)
 
-    lstm_inputs = tf.stack([losses, loss_diffs], axis=1)
-    lstm_inputs = tf.squeeze(lstm_inputs)
-    lstm_inputs = [lstm_inputs]
+    lstm_inputs = torch.stack([losses, loss_diffs], feat_dim=1)
+    lstm_inputs = lstm_inputs.squeeze()
+    
 
-    forward_cell = tf.contrib.rnn.BasicLSTMCell(1, forget_bias=0.0)
-    backward_cell = tf.contrib.rnn.BasicLSTMCell(1, forget_bias=0.0)
+    forward_cell = nn.LSTMCell(1, bias = False)
+    backward_cell = nn.LSTMCell(1, bias = False)
+    
+    ## used chatgpt for reference  
+    out_state_fw = []
+    out_state_bw = []
+    hidden_fw = torch.zeros(batch_size, forward_cell.hidden_size)
+    hidden_bw = torch.zeros(batch_size,backward_cell.hidden_size)
+    cell_fw = torch.zeros(batch_size,forward_cell.hidden_size)
+    cell_bw = torch.zeros(batch_size, backward_cell.hidden_size)
 
-    _, out_state_fw, out_state_bw = tf.contrib.rnn.static_bidirectional_rnn(
-        forward_cell,
-        backward_cell,
-        inputs=lstm_inputs,
-        dtype=tf.float32,
-        sequence_length=np.ones(batch_size) * num_steps)
+    for timestep in range(num_steps):
+      hidden_fw, cell_fw = forward_cell(lstm_inputs[:, timestep],(hidden_fw, cell_fw))
+      hidden_bw, cell_bw = backward_cell(lstm_inputs[:, num_steps - timestep - 1], (hidden_bw, cell_bw))
+      out_state_fw.append(hidden_fw)
+      out_state_bw.append(hidden_bw)
 
-    label_inputs = tf.squeeze(tf.nn.embedding_lookup(label_embedding, labels))
-    epoch_inputs = tf.squeeze(tf.nn.embedding_lookup(epoch_embedding, epochs))
+    out_state_fw = torch.stack(out_state_fw, dim = 1)
+    out_state_bw = torch.stack(out_state_bw, dim = 1)
+    ## END used chatgpt for reference
+   
 
-    h = tf.concat([out_state_fw[0], out_state_bw[0]], 1)
-    feat = tf.concat([label_inputs, epoch_inputs, h], 1)
-    feat_dim = int(feat.get_shape()[1])
+    label_inputs = label_embedding[labels.squeeze()]
+    epoch_inputs = epoch_embedding[epochs.squeeze()]
+    h = torch.cat([out_state_fw[:,0], out_state_bw[:,0]], dim = 1)
+    ## torch.cat function is used to concatenate tensors along certain dimension and is exact equivalent of tf.concat, the code concatenates first timestep's hidden states from fw and bw directions along the second dimension (dim - 1), which creates tensor h 
+    feat = torch.cat([label_inputs, epoch_inputs, h], dim = 1)
+    ## basically same as previous line - feat = contains the concatenated values from label_inputsand epoch_inputs and h in that order
+    feat_dim = feat.size(1)
+    ##pytorch u use .size() to get shape of tensor
 
-    fc_1 = tf.add(
-        tf.matmul(feat, tf.Variable(tf.random_normal([feat_dim,
-                                                      num_fc_nodes]))),
-        tf.Variable(tf.random_normal([num_fc_nodes])))
-    fc_1 = tf.nn.tanh(fc_1)
+    fc_1 = torch.matmul(feat,torch.randn(feat_dim, num_fc_nodes)) + torch.randn(num_fc_nodes)
+    ##with torch.randn(feat_dim,num_fc_nodes), you create tensor of random values drawn from normal distribution with standard deviation 1 and the shape of the tensor is (num_fc_nodes, 1) (this represents the weights for the first fully connected layer (set of parameters that determine influence inputs have on output))
+    ## torch.matmul(fc_1, torch.randn(num_fc_nodes,1)) -- this performs matrix multiplications between output of first layer (fc_1) and weight tensor created prior
+    fc_1 = torch.tanh(fc_1)
+    ## applies hyperbolic tangent activation function to tensor fc_1
     # Output layer with linear activation
-    out_layer = tf.matmul(
-        fc_1,
-        tf.Variable(tf.random_normal([num_fc_nodes, 1]))
-        + tf.Variable(tf.random_normal([1])))
+    out_layer = torch.matmul(fc_1, torch.randn(num_fc_nodes, 1)) + torch.randn(1)
+    ## creates tensor of random values w normal distribution and standard dev 1 - shape is (num_fc_nodes) , matrix multiplication betwene fc_1 and weigh tensor in previous line, torch.randn(1) creates a tensor of random values w normal distribution shape of tensor is 1, which reps bias for output layer and bias tensor is added to matrx multiplication prior
     return out_layer
 
 
@@ -276,18 +285,7 @@ def probabilistic_sample(v, rate=0.5, mode='binary'):
   """
   assert rate >= 0 and rate <= 1
   epsilon = 1e-5
-  with tf.variable_scope('mentornet/prob_sampling'):
-    p = np.copy(v)
-    p = np.reshape(p, -1)
-    if mode == 'random':
-      ids = np.random.choice(
-          p.shape[0], int(p.shape[0] * (1 - rate)), replace=False)
-    else:
-      # Avoid 1) all zero loss and 2) zero loss are never selected.
-      p += epsilon
-      p /= np.sum(p)
-      ids = np.random.choice(
-          p.shape[0], int(p.shape[0] * (1 - rate)), p=p, replace=False)
+    # Avoid 1) all zero loss and 2) zero loss are never selected.
     result = np.zeros(v.shape, dtype=np.float32)
     if mode == 'binary':
       result[ids, 0] = 1

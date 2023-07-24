@@ -28,7 +28,7 @@ from collections import namedtuple
 
 import numpy as np
 
-import tensorflow as tf
+import torch
 from tensorflow.python.training import moving_averages
 
 

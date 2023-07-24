@@ -111,7 +111,7 @@ class ResNet(nn.Module):
       x = res_func(x, filters[2], filters[3], self._stride_arr(strides[2]),
                    activate_before_residual[2])
     for i in range(1, self.hps.num_residual_units):
-      with tf.variable_scope('unit_3_%d' % i):
+      with torch.no_grad():
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 
     with tf.variable_scope('unit_last'):

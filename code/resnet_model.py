@@ -40,7 +40,7 @@ HParams = namedtuple('HParams',
                      'relu_leakiness, optimizer')
 
 
-class ResNet(object):
+class ResNet(nn.Module):
   """ResNet model."""
 
   def __init__(self, hps, images, labels, mode):

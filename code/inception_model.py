@@ -81,6 +81,8 @@ class CifarNet(nn.Module):
 #                          normalizer_params=batch_norm_params,
 #                          normalizer_fn=slim.batch_norm):
 def forward(self, x): 
+  #first
+  x = F.relu(self.conv1(x))
 
   return logits, end_points
 

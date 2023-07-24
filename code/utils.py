@@ -285,7 +285,17 @@ def probabilistic_sample(v, rate=0.5, mode='binary'):
   """
   assert rate >= 0 and rate <= 1
   epsilon = 1e-5
+  p = np.copy(v)
+  p = np.reshape(p, -1)
+  if mode == 'random':
+    ids = np.random.choice(
+        p.shape[0], int(p.shape[0] * (1 - rate)), replace=False)
+  else:
     # Avoid 1) all zero loss and 2) zero loss are never selected.
+    p += epsilon
+    p /= np.sum(p)
+    ids = np.random.choice(
+        p.shape[0], int(p.shape[0] * (1 - rate)), p=p, replace=False)
     result = np.zeros(v.shape, dtype=np.float32)
     if mode == 'binary':
       result[ids, 0] = 1

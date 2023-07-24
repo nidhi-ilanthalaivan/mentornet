@@ -29,7 +29,9 @@ from collections import namedtuple
 import numpy as np
 
 import torch
-from tensorflow.python.training import moving_averages
+import torch.nn as nn
+import torch.nn.functional as F
+
 
 
 HParams = namedtuple('HParams',
@@ -38,7 +40,7 @@ HParams = namedtuple('HParams',
                      'relu_leakiness, optimizer')
 
 
-class ResNet(object):
+class ResNet(nn.Module):
   """ResNet model."""
 
   def __init__(self, hps, images, labels, mode):
@@ -50,6 +52,7 @@ class ResNet(object):
       labels: Batches of labels. [batch_size, num_classes]
       mode: One of 'train' and 'eval'.
     """
+    super(ResNet, self).__init__()
     self.hps = hps
     self._images = images
     self.labels = labels
@@ -59,7 +62,7 @@ class ResNet(object):
 
   def build_graph_unused(self):
     """Build a whole graph for the model."""
-    self.global_step = tf.Variable(0, name='global_step', trainable=False)
+    self.global_step = torch.nn.Parameter(torch.tensor(0), trainable=False)
     self.build_model()
     if self.mode == 'train':
       self._build_train_op()

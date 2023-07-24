@@ -85,6 +85,7 @@ def forward(self, x):
   x = F.relu(self.conv1(x))
   x = self.pool1(x)
   x = self.norm1(x)
+  end_points = {'conv1':x}
 
   return logits, end_points
 

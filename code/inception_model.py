@@ -65,7 +65,7 @@ class CifarNet(nn.Module):
     end_points: a dictionary from components of the network to the corresponding
       activation.
   """
-  end_points = {}
+ 
 
 # Turn on if the batch norm is used.
 #   batch_norm_params = {

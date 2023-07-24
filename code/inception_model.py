@@ -97,6 +97,7 @@ def forward(self, x):
   x = F.relu(self.fc3(x))
   x = F.relu(self.fc4(x))
   logits = self.logits(x)
+  x = self.dropout3(x)
   return logits, end_points 
 cifarnet.default_image_size = 32
 

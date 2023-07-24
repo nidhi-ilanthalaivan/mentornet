@@ -86,6 +86,11 @@ def forward(self, x):
   x = self.pool1(x)
   x = self.norm1(x)
   end_points = {'conv1':x}
+#second 
+  x = F.relu(self.conv2(x))
+  x = self.pool2(x)
+  x = self.norm2(x)
+  end_points['conv2'] = x
 
   return logits, end_points
 

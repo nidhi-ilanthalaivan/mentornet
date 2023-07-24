@@ -91,6 +91,8 @@ def forward(self, x):
   x = self.pool2(x)
   x = self.norm2(x)
   end_points['conv2'] = x
+#flatten
+  x = torch.flatten(x,1)
 
   return logits, end_points
 

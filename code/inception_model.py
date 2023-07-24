@@ -94,7 +94,8 @@ def forward(self, x):
 #flatten
   x = torch.flatten(x,1)
   end_points['Flatten'] = x
-
+  x = F.relu(self.fc3(x))
+  x = F.relu(self.fc4(x))
   return logits, end_points 
 cifarnet.default_image_size = 32
 

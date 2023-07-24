@@ -83,6 +83,7 @@ class CifarNet(nn.Module):
 def forward(self, x): 
   #first
   x = F.relu(self.conv1(x))
+  x = self.pool1(x)
 
   return logits, end_points
 

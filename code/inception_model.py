@@ -93,6 +93,7 @@ def forward(self, x):
   end_points['conv2'] = x
 #flatten
   x = torch.flatten(x,1)
+  end_points['Flatten'] = x
 
   return logits, end_points
 

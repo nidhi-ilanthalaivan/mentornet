@@ -37,6 +37,8 @@ class CifarNet(nn.Module):
     self.fc3 = nn.Linear(8*8*64, 384)
     self.fc4 = nn.Linear(384,192)
     self.logits = nn.Linear(192, num_classes)
+    self.dropout3 = nn.Dropout(p=1 - self.dropout_keep_prob)
+
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the

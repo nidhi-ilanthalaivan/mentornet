@@ -52,6 +52,7 @@ class ResNet(nn.Module):
       labels: Batches of labels. [batch_size, num_classes]
       mode: One of 'train' and 'eval'.
     """
+    super(ResNet, self).__init__()
     self.hps = hps
     self._images = images
     self.labels = labels

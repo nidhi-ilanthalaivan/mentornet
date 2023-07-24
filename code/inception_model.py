@@ -36,6 +36,7 @@ class CifarNet(nn.Module):
     self.norm2 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k = 1.0)
     self.fc3 = nn.Linear(8*8*64, 384)
     self.fc4 = nn.Linear(384,192)
+    self.logits = nn.Linear(192, num_classes)
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the

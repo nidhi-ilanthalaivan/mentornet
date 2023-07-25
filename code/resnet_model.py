@@ -137,12 +137,7 @@ class ResNet(nn.Module):
     elif self.hps.optimizer == 'mom':
       optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate, momentum = 0.9)
 
-    apply_op = optimizer.apply_gradients(
-        zip(grads, trainable_variables),
-        global_step=self.global_step, name='train_step')
-
-    train_ops = [apply_op] + self.extra_train_ops
-    self.train_op = tf.group(*train_ops)
+    self.optimizer = optimizer
 
   def _batch_norm(self, name, x):
     """Batch normalization."""

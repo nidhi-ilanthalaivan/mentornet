@@ -129,8 +129,8 @@ class ResNet(nn.Module):
     self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
     tf.compat.v1.summary.scalar('learning rate', self.lrn_rate)
 
-    trainable_variables = tf.trainable_variables()
-    grads = tf.gradients(self.cost, trainable_variables)
+    trainable_variables = filter(lambda p: p.requires_grad, self.parameters())
+    optimizer = None
 
     if self.hps.optimizer == 'sgd':
       optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)

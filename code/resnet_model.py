@@ -126,7 +126,7 @@ class ResNet(nn.Module):
 
   def _build_train_op(self):
     """Build training specific ops for the graph."""
-    self.lrn_rate = tf.constant(self.hps.lrn_rate, tf.float32)
+    self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
     tf.compat.v1.summary.scalar('learning rate', self.lrn_rate)
 
     trainable_variables = tf.trainable_variables()

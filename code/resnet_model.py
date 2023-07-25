@@ -144,7 +144,7 @@ class ResNet(nn.Module):
       params_shape = [x.size()[-1]]
 
       beta = nn.Parameter(torch.zeros(params_shape))
-      gamma = nn.Parameter(torch.zeros(params_shape))
+      gamma = nn.Parameter(torch.ones(params_shape))
 
       if self.mode == 'train':
         mean = x.mean(dim = [0,2,3], keepdim = True) 

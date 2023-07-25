@@ -160,7 +160,7 @@ class ResNet(nn.Module):
         mean = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
         variance = nn.Parameter(torch.ones(params_shape), requires_grad = False)
       y = F.batch_norm(x, mean, variance, beta, gamma, eps = 0.001, training = self.mode == 'train')
-      y.set_shape(x.get_shape())
+      y.set_shape(x.size())
       return y
 
   def _residual(self, x, in_filter, out_filter, stride,

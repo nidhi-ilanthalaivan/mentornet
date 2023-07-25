@@ -144,9 +144,7 @@ class ResNet(nn.Module):
       params_shape = [x.size()[-1]]
 
       beta = nn.Parameter(torch.zeros(params_shape))
-      gamma = tf.get_variable(
-          'gamma', params_shape, tf.float32,
-          initializer=tf.constant_initializer(1.0, tf.float32))
+      gamma = nn.Parameter(torch.zeros(params_shape))
 
       if self.mode == 'train':
         mean, variance = tf.nn.moments(x, [0, 1, 2], name='moments')

@@ -159,8 +159,7 @@ class ResNet(nn.Module):
       else:
         mean = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
         variance = nn.Parameter(torch.ones(params_shape), requires_grad = False)
-      y = tf.nn.batch_normalization(
-          x, mean, variance, beta, gamma, 0.001)
+      y = F.batch_norm(x, mean, variance, beta, gamma, eps = 0.001, training = self.mode == 'train')
       y.set_shape(x.get_shape())
       return y
 

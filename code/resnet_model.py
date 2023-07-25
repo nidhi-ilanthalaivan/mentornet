@@ -177,7 +177,7 @@ class ResNet(nn.Module):
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
 
-    with tf.variable_scope('sub1'):
+    with torch.no_grad():
       x = self._conv('conv1', x, 3, in_filter, out_filter, stride)
 
     with tf.variable_scope('sub2'):

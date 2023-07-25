@@ -28,10 +28,17 @@ class CifarNet(nn.Module):
     super(CifarNet, self).__init__()
     self.num_classes = num_classes
     self.dropout_keep_prob = dropout_keep_prob
-def cifarnet(images, num_classes=10, is_training=False,
-             dropout_keep_prob=0.5,
-             prediction_fn=slim.softmax,
-             scope='CifarNet'):
+    self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 5, stride = 1, padding = 2)
+    self.conv2 = nn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 5, stride = 1, padding = 2) 
+    self.pool1 = nn.MaxPool2d(kernel_size = 2, stride = 2)
+    self.pool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
+    self.norm1 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k=1.0)
+    self.norm2 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k = 1.0)
+    self.fc3 = nn.Linear(8*8*64, 384)
+    self.fc4 = nn.Linear(384,192)
+    self.logits = nn.Linear(192, num_classes)
+    self.dropout3 = nn.Dropout(p=1 - self.dropout_keep_prob)
+
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the
@@ -58,7 +65,7 @@ def cifarnet(images, num_classes=10, is_training=False,
     end_points: a dictionary from components of the network to the corresponding
       activation.
   """
-  end_points = {}
+ 
 
 # Turn on if the batch norm is used.
 #   batch_norm_params = {
@@ -73,57 +80,22 @@ def cifarnet(images, num_classes=10, is_training=False,
 #   with slim.arg_scope([slim.conv2d, slim.fully_connected],
 #                          normalizer_params=batch_norm_params,
 #                          normalizer_fn=slim.batch_norm):
-  with tf.variable_scope(scope, 'CifarNet', [images, num_classes]):
-    net = slim.conv2d(images, 64, [5, 5], scope='conv1')
-    end_points['conv1'] = net
-    net = slim.max_pool2d(net, [2, 2], 2, scope='pool1')
-    end_points['pool1'] = net
-    net = tf.nn.lrn(net, 4, bias=1.0, alpha=0.001/9.0, beta=0.75, name='norm1')
-    net = slim.conv2d(net, 64, [5, 5], scope='conv2')
-    end_points['conv2'] = net
-    net = tf.nn.lrn(net, 4, bias=1.0, alpha=0.001/9.0, beta=0.75, name='norm2')
-    net = slim.max_pool2d(net, [2, 2], 2, scope='pool2')
-    end_points['pool2'] = net
-    net = slim.flatten(net)
-    end_points['Flatten'] = net
-    net = slim.fully_connected(net, 384, scope='fc3')
-    end_points['fc3'] = net
-    net = slim.dropout(net, dropout_keep_prob, is_training=is_training,
-                       scope='dropout3')
-    net = slim.fully_connected(net, 192, scope='fc4')
-    end_points['fc4'] = net
-    logits = slim.fully_connected(net, num_classes,
-                                  biases_initializer=tf.zeros_initializer(),
-                                  weights_initializer=trunc_normal(1/192.0),
-                                  weights_regularizer=None,
-                                  activation_fn=None,
-                                  scope='logits')
-
-    end_points['Logits'] = logits
-    end_points['Predictions'] = prediction_fn(logits, scope='Predictions')
-
-  return logits, end_points
-
-cifarnet.default_image_size = 32
-
-
-def cifarnet_arg_scope(weight_decay=0.004):
-  """Defines the default cifarnet argument scope.
-
-  Args:
-    weight_decay: The weight decay to use for regularizing the model.
-
-  Returns:
-    An `arg_scope` to use for the inception v3 model.
-  """
-  with slim.arg_scope(
-      [slim.conv2d],
-      weights_initializer=tf.truncated_normal_initializer(stddev=5e-2),
-      activation_fn=tf.nn.relu):
-    with slim.arg_scope(
-        [slim.fully_connected],
-        biases_initializer=tf.constant_initializer(0.1),
-        weights_initializer=trunc_normal(0.04),
-        weights_regularizer=slim.l2_regularizer(weight_decay),
-        activation_fn=tf.nn.relu) as sc:
-      return sc
+def forward(self, x): 
+  #first
+  x = F.relu(self.conv1(x))
+  x = self.pool1(x)
+  x = self.norm1(x)
+  end_points = {'conv1':x}
+#second 
+  x = F.relu(self.conv2(x))
+  x = self.pool2(x)
+  x = self.norm2(x)
+  end_points['conv2'] = x
+#flatten
+  x = torch.flatten(x,1)
+  end_points['Flatten'] = x
+  x = F.relu(self.fc3(x))
+  x = F.relu(self.fc4(x))
+  logits = self.logits(x)
+  x = self.dropout3(x)
+  return logits, end_points 

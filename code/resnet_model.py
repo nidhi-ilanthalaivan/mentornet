@@ -135,7 +135,7 @@ class ResNet(nn.Module):
     if self.hps.optimizer == 'sgd':
       optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate)
     elif self.hps.optimizer == 'mom':
-      optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
+      optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate, momentum = 0.9)
 
     apply_op = optimizer.apply_gradients(
         zip(grads, trainable_variables),

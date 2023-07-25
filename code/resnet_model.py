@@ -200,7 +200,7 @@ class ResNet(nn.Module):
                            activate_before_residual=False):
     """Bottleneck residual unit with 3 sub layers."""
     if activate_before_residual:
-      with tf.variable_scope('common_bn_relu'):
+      with torch.no
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
         orig_x = x

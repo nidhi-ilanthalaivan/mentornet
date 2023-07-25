@@ -150,10 +150,7 @@ class ResNet(nn.Module):
         mean = x.mean(dim = [0,2,3], keepdim = True) 
         variance = x.var (dim = [0,2,3],unbiased = False, keepdim = True )
 
-        moving_mean = tf.get_variable(
-            'moving_mean', params_shape, tf.float32,
-            initializer=tf.constant_initializer(0.0, tf.float32),
-            trainable=False)
+        moving_mean = nn.Parameter(torch.zeros(params_shape))
         moving_variance = tf.get_variable(
             'moving_variance', params_shape, tf.float32,
             initializer=tf.constant_initializer(1.0, tf.float32),

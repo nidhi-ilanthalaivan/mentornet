@@ -141,8 +141,7 @@ class ResNet(nn.Module):
 
   def _batch_norm(self, name, x):
     """Batch normalization."""
-    with tf.variable_scope(name):
-      params_shape = [x.get_shape()[-1]]
+      params_shape = [x.size()[-1]]
 
       beta = tf.get_variable(
           'beta', params_shape, tf.float32,

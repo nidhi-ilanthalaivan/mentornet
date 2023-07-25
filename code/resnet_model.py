@@ -158,10 +158,7 @@ class ResNet(nn.Module):
             moving_variance, variance, 0.9, zero_debias=False))
       else:
         mean = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
-        variance = tf.get_variable(
-            'moving_variance', params_shape, tf.float32,
-            initializer=tf.constant_initializer(1.0, tf.float32),
-            trainable=False)
+        variance = nn.Parameter(torch.ones(params_shape), requires_grad = False)
       y = tf.nn.batch_normalization(
           x, mean, variance, beta, gamma, 0.001)
       y.set_shape(x.get_shape())

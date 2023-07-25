@@ -143,9 +143,7 @@ class ResNet(nn.Module):
     """Batch normalization."""
       params_shape = [x.size()[-1]]
 
-      beta = tf.get_variable(
-          'beta', params_shape, tf.float32,
-          initializer=tf.constant_initializer(0.0, tf.float32))
+      beta = nn.Parameter(torch.zeros(params_shape))
       gamma = tf.get_variable(
           'gamma', params_shape, tf.float32,
           initializer=tf.constant_initializer(1.0, tf.float32))

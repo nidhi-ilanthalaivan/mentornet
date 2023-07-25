@@ -133,7 +133,7 @@ class ResNet(nn.Module):
     optimizer = None
 
     if self.hps.optimizer == 'sgd':
-      optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
+      optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate)
     elif self.hps.optimizer == 'mom':
       optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
 

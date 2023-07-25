@@ -147,7 +147,8 @@ class ResNet(nn.Module):
       gamma = nn.Parameter(torch.zeros(params_shape))
 
       if self.mode == 'train':
-        mean, variance = tf.nn.moments(x, [0, 1, 2], name='moments')
+        mean = x.mean(dim = [0,2,3], keepdim = True) 
+        variance = x.var (dim = [0,2,3],unbiased = False, keepdim = True )
 
         moving_mean = tf.get_variable(
             'moving_mean', params_shape, tf.float32,

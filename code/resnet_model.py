@@ -24,9 +24,7 @@ https://arxiv.org/pdf/1603.05027v2.pdf
 https://arxiv.org/pdf/1512.03385v1.pdf
 https://arxiv.org/pdf/1605.07146v1.pdf
 """
-from collections import namedtuple
 
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -66,7 +64,6 @@ class ResNet(nn.Module):
     self.build_model()
     if self.mode == 'train':
       self._build_train_op()
-    self.summaries = tf.summary.merge_all()
 
   def _stride_arr(self, stride):
     """Map a stride scalar to the stride array for tf.nn.conv2d."""
@@ -127,7 +124,7 @@ class ResNet(nn.Module):
   def _build_train_op(self):
     """Build training specific ops for the graph."""
     self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
-    tf.compat.v1.summary.scalar('learning rate', self.lrn_rate)
+
 
     trainable_variables = filter(lambda p: p.requires_grad, self.parameters())
     optimizer = None
@@ -149,13 +146,6 @@ class ResNet(nn.Module):
       if self.mode == 'train':
         mean = x.mean(dim = [0,2,3], keepdim = True) 
         variance = x.var (dim = [0,2,3],unbiased = False, keepdim = True )
-
-        moving_variance = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
-
-        self.extra_train_ops.append(moving_averages.assign_moving_average(
-            moving_mean, mean, 0.9))
-        self.extra_train_ops.append(moving_averages.assign_moving_average(
-            moving_variance, variance, 0.9, zero_debias=False))
       else:
         mean = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
         variance = nn.Parameter(torch.ones(params_shape), requires_grad = False)

@@ -58,6 +58,7 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
   def _load_data(self): 
      dataset = torchvision.datasets.CIFAR10(
        root = self.dataset_dir,
+       train = self.split_name =='train', 
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

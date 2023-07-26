@@ -18,8 +18,7 @@
 import cifar100_dataset
 import cifar10_dataset
 import torch
-import tensorflow.contrib.slim as slim
-from tensorflow.contrib.slim.python.slim.data import dataset_data_provider
+import torchvision.transforms as transforms
 
 datasets_map = {
     'cifar10': cifar10_dataset,

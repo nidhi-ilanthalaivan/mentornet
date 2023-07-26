@@ -21,10 +21,13 @@
 
 import os
 
-import tensorflow as tf
+import torch 
 
-from tensorflow.contrib.slim.python.slim.data import dataset
-from tensorflow.contrib.slim.python.slim.data import tfexample_decoder
+import torchvision 
+
+import torchvision.transforms as transforms 
+
+import torchvision.datasets as datasets 
 
 _FILE_PATTERN = 'cifar10_%s-*'
 

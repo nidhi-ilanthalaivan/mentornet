@@ -42,8 +42,8 @@ _ITEMS_TO_DESCRIPTIONS = {
     'label': 'A single integer between 0 and 9',
 }
 
-
-def get_split(split_name, dataset_dir=None):
+class CIFAR10Dataset(torch.utils.data.Dataset): 
+  def __init__(self, split_name, dataset_dir = None, transform = None ): 
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

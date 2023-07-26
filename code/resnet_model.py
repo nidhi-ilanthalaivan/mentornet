@@ -179,6 +179,7 @@ class ResNet(nn.Module):
       if in_filter != out_filter:
         orig_x = F.avg_pool2d(orig_x, stride)
         pad = [0,0,0,0, (out_filter - in_filter) // 2, (out_filter - in_filter) // 2]
+        orig_x = F.pad(orig_x, pad)
       x += orig_x
 
     tf.logging.info('image after unit %s', x.get_shape())

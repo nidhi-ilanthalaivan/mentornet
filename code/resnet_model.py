@@ -217,7 +217,7 @@ class ResNet(nn.Module):
         orig_x = self._conv('project', orig_x, 1, in_filter, out_filter, stride)
       x += orig_x
 
-    tf.logging.info('image after unit %s', x.get_shape())
+    print('image after unit', x.size())
     return x
 
   def decay(self):

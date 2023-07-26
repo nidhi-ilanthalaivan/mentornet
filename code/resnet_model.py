@@ -223,9 +223,9 @@ class ResNet(nn.Module):
   def decay(self):
     """L2 weight decay loss."""
     costs = []
-    for var in tf.trainable_variables():
-      if var.op.name.find(r'DW') > 0:
-        costs.append(tf.nn.l2_loss(var))
+    for var in self.parameters():
+      if 'DW' in var.op.name:
+        costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
     return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
 

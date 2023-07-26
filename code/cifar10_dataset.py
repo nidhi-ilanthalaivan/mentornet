@@ -44,6 +44,11 @@ _ITEMS_TO_DESCRIPTIONS = {
 
 class CIFAR10Dataset(torch.utils.data.Dataset): 
   def __init__(self, split_name, dataset_dir = None, transform = None ): 
+    if split_name is None: 
+      raise ValueError('split name $s was not recognized.' %split_name)
+    
+    if dataset_dir is None: 
+      dataset_dir = _DATASET_DIR
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

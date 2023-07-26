@@ -227,12 +227,11 @@ class ResNet(nn.Module):
       if 'DW' in var.op.name:
         costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
-    return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
+    return self.hps.weight_decay_rate * sum(costs))
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""
     with torch.no_grad():
-      with torch.no_grad():
       n = filter_size * filter_size * out_filters
       kernel = torch.nn.Parameter(torch.randn(filter_size,filter_size, in_filters, out_filters)*np.sqrt(2.0/n))
       return torch.nn.functional.conv2d(x, kernel, stride = strides, padding='SAME')

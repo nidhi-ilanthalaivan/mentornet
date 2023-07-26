@@ -55,6 +55,7 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
     self.transform = transform 
     
     self.data, self.targets = self._load_data()
+  def _load_data(self): 
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

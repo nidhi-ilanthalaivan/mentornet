@@ -227,7 +227,7 @@ class ResNet(nn.Module):
       if 'DW' in var.op.name:
         costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
-    return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
+    return self.hps.weight_decay_rate * sum(costs))
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""
@@ -251,5 +251,5 @@ class ResNet(nn.Module):
     return tf.nn.xw_plus_b(x, w, b)
 
   def _global_avg_pool(self, x):
-    assert x.get_shape().ndims == 4
-    return tf.reduce_mean(x, [1, 2])
+    assert x.dim() == 4
+    return torch.mean(x, [2, 3])

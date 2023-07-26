@@ -238,17 +238,16 @@ class ResNet(nn.Module):
 
   def _relu(self, x, leakiness=0.0):
     """Relu, with optional leaky support."""
-    return tf.where(tf.less(x, 0.0), leakiness * x, x, name='leaky_relu')
-
+    if leakiness > 0:
+      return torch.where(x < 0, leakiness * x, x)
+    else:
+      return F.relu(x)
   def _fully_connected(self, x, out_dim):
     """FullyConnected layer for final output."""
-    x = tf.reshape(x, [self.hps.batch_size, -1])
-    w = tf.get_variable(
-        'DW', [x.get_shape()[1], out_dim],
-        initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
-    b = tf.get_variable('biases', [out_dim],
-                        initializer=tf.constant_initializer())
-    return tf.nn.xw_plus_b(x, w, b)
+    x = x.view(self.hps.batch_size, -1)
+    w = torch.empty(x.size(1), out_dim).uniform_(-1,1)
+    b = torch.zeros(out_dim)
+    return torch.matmul(x,w) + b
 
   def _global_avg_pool(self, x):
     assert x.dim() == 4

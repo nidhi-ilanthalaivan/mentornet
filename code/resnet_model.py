@@ -231,13 +231,11 @@ class ResNet(nn.Module):
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""
-    with tf.variable_scope(name):
+    with torch.no_grad():
+      with torch.no_grad():
       n = filter_size * filter_size * out_filters
-      kernel = tf.get_variable(
-          'DW', [filter_size, filter_size, in_filters, out_filters],
-          tf.float32, initializer=tf.random_normal_initializer(
-              stddev=np.sqrt(2.0/n)))
-      return tf.nn.conv2d(x, kernel, strides, padding='SAME')
+      kernel = torch.nn.Parameter(torch.randn(filter_size,filter_size, in_filters, out_filters)*np.sqrt(2.0/n))
+      return torch.nn.functional.conv2d(x, kernel, stride = strides, padding='SAME')
 
   def _relu(self, x, leakiness=0.0):
     """Relu, with optional leaky support."""

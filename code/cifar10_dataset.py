@@ -49,6 +49,7 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
     
     if dataset_dir is None: 
       dataset_dir = _DATASET_DIR
+    
     self.split_name = split_name 
     self.dataset_dir = dataset_dir 
     self.transform = transform 

@@ -177,10 +177,7 @@ class ResNet(nn.Module):
 
     with torch.no_grad():
       if in_filter != out_filter:
-        orig_x = tf.nn.avg_pool(orig_x, stride, stride, 'VALID')
-        orig_x = tf.pad(
-            orig_x, [[0, 0], [0, 0], [0, 0],
-                     [(out_filter-in_filter)//2, (out_filter-in_filter)//2]])
+        orig_x = F.avg_pool2d(orig_x, stride)
       x += orig_x
 
     tf.logging.info('image after unit %s', x.get_shape())

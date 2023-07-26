@@ -182,37 +182,37 @@ class ResNet(nn.Module):
         orig_x = F.pad(orig_x, pad)
       x += orig_x
 
-    tf.logging.info('image after unit %s', x.get_shape())
+    print('image after unit', x.size())
     return x
 
   def _bottleneck_residual(self, x, in_filter, out_filter, stride,
                            activate_before_residual=False):
     """Bottleneck residual unit with 3 sub layers."""
     if activate_before_residual:
-      with torch.no
+      with torch.no_grad():
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
         orig_x = x
     else:
-      with tf.variable_scope('residual_bn_relu'):
+      with torch.no_grad():
         orig_x = x
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
 
-    with tf.variable_scope('sub1'):
-      x = self._conv('conv1', x, 1, in_filter, out_filter/4, stride)
+    with torch.no_grad():
+      x = self._conv('conv1', x, 1, in_filter, out_filter//4, stride)
 
-    with tf.variable_scope('sub2'):
+    with torch.no_grad():
       x = self._batch_norm('bn2', x)
       x = self._relu(x, self.hps.relu_leakiness)
-      x = self._conv('conv2', x, 3, out_filter/4, out_filter/4, [1, 1, 1, 1])
+      x = self._conv('conv2', x, 3, out_filter//4, out_filter//4, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub3'):
+    with torch.no_grad():
       x = self._batch_norm('bn3', x)
       x = self._relu(x, self.hps.relu_leakiness)
-      x = self._conv('conv3', x, 1, out_filter/4, out_filter, [1, 1, 1, 1])
+      x = self._conv('conv3', x, 1, out_filter//4, out_filter, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub_add'):
+    with torch.no_grad():
       if in_filter != out_filter:
         orig_x = self._conv('project', orig_x, 1, in_filter, out_filter, stride)
       x += orig_x

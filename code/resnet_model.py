@@ -227,7 +227,7 @@ class ResNet(nn.Module):
       if 'DW' in var.op.name:
         costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
-    return self.hps.weight_decay_rate * sum(costs))
+    return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""

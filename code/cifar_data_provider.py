@@ -17,7 +17,7 @@
 
 import cifar100_dataset
 import cifar10_dataset
-import tensorflow as tf
+import torch
 import tensorflow.contrib.slim as slim
 from tensorflow.contrib.slim.python.slim.data import dataset_data_provider
 

@@ -57,12 +57,7 @@ def provide_resnet_data(dataset_name,
   dataset = get_dataset(dataset_name, split_name, dataset_dir=dataset_dir)
 
   # num_epochs = 1 if split_name == 'test' else None
-  provider = dataset_data_provider.DatasetDataProvider(
-      dataset,
-      common_queue_capacity=2 * batch_size,
-      common_queue_min=batch_size,
-      shuffle=(split_name == 'train'),
-      num_epochs=num_epochs)
+  
   if dataset_name == 'cifar100':
     [image, label] = provider.get(['image', 'fine_label'])
   else:

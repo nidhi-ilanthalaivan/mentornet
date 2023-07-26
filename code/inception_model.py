@@ -16,7 +16,7 @@
 """Contains a variant of the CIFAR-10 model definition."""
 
 
-import torch 
+import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 

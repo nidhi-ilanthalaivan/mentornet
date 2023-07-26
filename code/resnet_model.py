@@ -157,7 +157,7 @@ class ResNet(nn.Module):
                 activate_before_residual=False):
     """Residual unit with 2 sub layers."""
     if activate_before_residual:
-      with tf.variable_scope('shared_activation'):
+      with torch.no_grad():
         x = self._relu(x, self.hps.relu_leakiness)
         x = self._batch_norm('init_bn', x)
         orig_x = x

@@ -24,9 +24,7 @@ https://arxiv.org/pdf/1603.05027v2.pdf
 https://arxiv.org/pdf/1512.03385v1.pdf
 https://arxiv.org/pdf/1605.07146v1.pdf
 """
-from collections import namedtuple
 
-import numpy as np
 
 import torch
 import torch.nn as nn
@@ -66,7 +64,6 @@ class ResNet(nn.Module):
     self.build_model()
     if self.mode == 'train':
       self._build_train_op()
-    self.summaries = tf.summary.merge_all()
 
   def _stride_arr(self, stride):
     """Map a stride scalar to the stride array for tf.nn.conv2d."""
@@ -74,7 +71,7 @@ class ResNet(nn.Module):
 
   def build_model(self):
     """Build the core model within the graph."""
-    with tf.variable_scope('init'):
+    with torch.no_grad():
       x = self._images
       x = self._conv('init_conv', x, 3, 3, 16, self._stride_arr(1))
 
@@ -93,200 +90,165 @@ class ResNet(nn.Module):
       filters = [16, 160, 320, 640]
       # Update hps.num_residual_units to 9
 
-    with tf.variable_scope('unit_1_0'):
+    with torch.no_grad():
       x = res_func(x, filters[0], filters[1], self._stride_arr(strides[0]),
                    activate_before_residual[0])
-    for i in xrange(1, self.hps.num_residual_units):
-      with tf.variable_scope('unit_1_%d' % i):
+    for i in range(1, self.hps.num_residual_units):
+      with torch.no_grad():
         x = res_func(x, filters[1], filters[1], self._stride_arr(1), False)
 
-    with tf.variable_scope('unit_2_0'):
+    with torch.no_grad():
       x = res_func(x, filters[1], filters[2], self._stride_arr(strides[1]),
                    activate_before_residual[1])
-    for i in xrange(1, self.hps.num_residual_units):
-      with tf.variable_scope('unit_2_%d' % i):
+    for i in range(1, self.hps.num_residual_units):
+      with torch.no_grad():
         x = res_func(x, filters[2], filters[2], self._stride_arr(1), False)
 
-    with tf.variable_scope('unit_3_0'):
+    with torch.no_grad():
       x = res_func(x, filters[2], filters[3], self._stride_arr(strides[2]),
                    activate_before_residual[2])
-    for i in xrange(1, self.hps.num_residual_units):
-      with tf.variable_scope('unit_3_%d' % i):
+    for i in range(1, self.hps.num_residual_units):
+      with torch.no_grad():
         x = res_func(x, filters[3], filters[3], self._stride_arr(1), False)
 
-    with tf.variable_scope('unit_last'):
+    with torch.no_grad():
       x = self._batch_norm('final_bn', x)
       x = self._relu(x, self.hps.relu_leakiness)
       x = self._global_avg_pool(x)
 
-    with tf.variable_scope('logit'):
+    with torch.no_grad():
       logits = self._fully_connected(x, self.hps.num_classes)
 
     return logits
 
   def _build_train_op(self):
     """Build training specific ops for the graph."""
-    self.lrn_rate = tf.constant(self.hps.lrn_rate, tf.float32)
-    tf.compat.v1.summary.scalar('learning rate', self.lrn_rate)
+    self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
 
-    trainable_variables = tf.trainable_variables()
-    grads = tf.gradients(self.cost, trainable_variables)
+
+    trainable_variables = filter(lambda p: p.requires_grad, self.parameters())
+    optimizer = None
 
     if self.hps.optimizer == 'sgd':
-      optimizer = tf.train.GradientDescentOptimizer(self.lrn_rate)
+      optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate)
     elif self.hps.optimizer == 'mom':
-      optimizer = tf.train.MomentumOptimizer(self.lrn_rate, 0.9)
+      optimizer = optim.SGD(trainable_parameters, lr = self.lrn_rate, momentum = 0.9)
 
-    apply_op = optimizer.apply_gradients(
-        zip(grads, trainable_variables),
-        global_step=self.global_step, name='train_step')
-
-    train_ops = [apply_op] + self.extra_train_ops
-    self.train_op = tf.group(*train_ops)
+    self.optimizer = optimizer
 
   def _batch_norm(self, name, x):
     """Batch normalization."""
-    with tf.variable_scope(name):
-      params_shape = [x.get_shape()[-1]]
+      params_shape = [x.size()[-1]]
 
-      beta = tf.get_variable(
-          'beta', params_shape, tf.float32,
-          initializer=tf.constant_initializer(0.0, tf.float32))
-      gamma = tf.get_variable(
-          'gamma', params_shape, tf.float32,
-          initializer=tf.constant_initializer(1.0, tf.float32))
+      beta = nn.Parameter(torch.zeros(params_shape))
+      gamma = nn.Parameter(torch.ones(params_shape))
 
       if self.mode == 'train':
-        mean, variance = tf.nn.moments(x, [0, 1, 2], name='moments')
-
-        moving_mean = tf.get_variable(
-            'moving_mean', params_shape, tf.float32,
-            initializer=tf.constant_initializer(0.0, tf.float32),
-            trainable=False)
-        moving_variance = tf.get_variable(
-            'moving_variance', params_shape, tf.float32,
-            initializer=tf.constant_initializer(1.0, tf.float32),
-            trainable=False)
-
-        self.extra_train_ops.append(moving_averages.assign_moving_average(
-            moving_mean, mean, 0.9))
-        self.extra_train_ops.append(moving_averages.assign_moving_average(
-            moving_variance, variance, 0.9, zero_debias=False))
+        mean = x.mean(dim = [0,2,3], keepdim = True) 
+        variance = x.var (dim = [0,2,3],unbiased = False, keepdim = True )
       else:
-        mean = tf.get_variable(
-            'moving_mean', params_shape, tf.float32,
-            initializer=tf.constant_initializer(0.0, tf.float32),
-            trainable=False)
-        variance = tf.get_variable(
-            'moving_variance', params_shape, tf.float32,
-            initializer=tf.constant_initializer(1.0, tf.float32),
-            trainable=False)
-      y = tf.nn.batch_normalization(
-          x, mean, variance, beta, gamma, 0.001)
-      y.set_shape(x.get_shape())
+        mean = nn.Parameter(torch.zeros(params_shape), requires_grad = False)
+        variance = nn.Parameter(torch.ones(params_shape), requires_grad = False)
+      y = F.batch_norm(x, mean, variance, beta, gamma, eps = 0.001, training = self.mode == 'train')
+      y.set_shape(x.size())
       return y
 
   def _residual(self, x, in_filter, out_filter, stride,
                 activate_before_residual=False):
     """Residual unit with 2 sub layers."""
     if activate_before_residual:
-      with tf.variable_scope('shared_activation'):
+      with torch.no_grad():
         x = self._relu(x, self.hps.relu_leakiness)
         x = self._batch_norm('init_bn', x)
         orig_x = x
     else:
-      with tf.variable_scope('residual_only_activation'):
+      with torch.no_grad():
         orig_x = x
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
 
-    with tf.variable_scope('sub1'):
+    with torch.no_grad():
       x = self._conv('conv1', x, 3, in_filter, out_filter, stride)
 
-    with tf.variable_scope('sub2'):
+    with torch.no_grad():
       x = self._batch_norm('bn2', x)
       x = self._relu(x, self.hps.relu_leakiness)
       x = self._conv('conv2', x, 3, out_filter, out_filter, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub_add'):
+    with torch.no_grad():
       if in_filter != out_filter:
-        orig_x = tf.nn.avg_pool(orig_x, stride, stride, 'VALID')
-        orig_x = tf.pad(
-            orig_x, [[0, 0], [0, 0], [0, 0],
-                     [(out_filter-in_filter)//2, (out_filter-in_filter)//2]])
+        orig_x = F.avg_pool2d(orig_x, stride)
+        pad = [0,0,0,0, (out_filter - in_filter) // 2, (out_filter - in_filter) // 2]
+        orig_x = F.pad(orig_x, pad)
       x += orig_x
 
-    tf.logging.info('image after unit %s', x.get_shape())
+    print('image after unit', x.size())
     return x
 
   def _bottleneck_residual(self, x, in_filter, out_filter, stride,
                            activate_before_residual=False):
     """Bottleneck residual unit with 3 sub layers."""
     if activate_before_residual:
-      with tf.variable_scope('common_bn_relu'):
+      with torch.no_grad():
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
         orig_x = x
     else:
-      with tf.variable_scope('residual_bn_relu'):
+      with torch.no_grad():
         orig_x = x
         x = self._batch_norm('init_bn', x)
         x = self._relu(x, self.hps.relu_leakiness)
 
-    with tf.variable_scope('sub1'):
-      x = self._conv('conv1', x, 1, in_filter, out_filter/4, stride)
+    with torch.no_grad():
+      x = self._conv('conv1', x, 1, in_filter, out_filter//4, stride)
 
-    with tf.variable_scope('sub2'):
+    with torch.no_grad():
       x = self._batch_norm('bn2', x)
       x = self._relu(x, self.hps.relu_leakiness)
-      x = self._conv('conv2', x, 3, out_filter/4, out_filter/4, [1, 1, 1, 1])
+      x = self._conv('conv2', x, 3, out_filter//4, out_filter//4, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub3'):
+    with torch.no_grad():
       x = self._batch_norm('bn3', x)
       x = self._relu(x, self.hps.relu_leakiness)
-      x = self._conv('conv3', x, 1, out_filter/4, out_filter, [1, 1, 1, 1])
+      x = self._conv('conv3', x, 1, out_filter//4, out_filter, [1, 1, 1, 1])
 
-    with tf.variable_scope('sub_add'):
+    with torch.no_grad():
       if in_filter != out_filter:
         orig_x = self._conv('project', orig_x, 1, in_filter, out_filter, stride)
       x += orig_x
 
-    tf.logging.info('image after unit %s', x.get_shape())
+    print('image after unit', x.size())
     return x
 
   def decay(self):
     """L2 weight decay loss."""
     costs = []
-    for var in tf.trainable_variables():
-      if var.op.name.find(r'DW') > 0:
-        costs.append(tf.nn.l2_loss(var))
+    for var in self.parameters():
+      if 'DW' in var.op.name:
+        costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
-    return tf.multiply(self.hps.weight_decay_rate, tf.add_n(costs))
+    return self.hps.weight_decay_rate * sum(costs))
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""
-    with tf.variable_scope(name):
+    with torch.no_grad():
       n = filter_size * filter_size * out_filters
-      kernel = tf.get_variable(
-          'DW', [filter_size, filter_size, in_filters, out_filters],
-          tf.float32, initializer=tf.random_normal_initializer(
-              stddev=np.sqrt(2.0/n)))
-      return tf.nn.conv2d(x, kernel, strides, padding='SAME')
+      kernel = torch.nn.Parameter(torch.randn(filter_size,filter_size, in_filters, out_filters)*np.sqrt(2.0/n))
+      return torch.nn.functional.conv2d(x, kernel, stride = strides, padding='SAME')
 
   def _relu(self, x, leakiness=0.0):
     """Relu, with optional leaky support."""
-    return tf.where(tf.less(x, 0.0), leakiness * x, x, name='leaky_relu')
-
+    if leakiness > 0:
+      return torch.where(x < 0, leakiness * x, x)
+    else:
+      return F.relu(x)
   def _fully_connected(self, x, out_dim):
     """FullyConnected layer for final output."""
-    x = tf.reshape(x, [self.hps.batch_size, -1])
-    w = tf.get_variable(
-        'DW', [x.get_shape()[1], out_dim],
-        initializer=tf.uniform_unit_scaling_initializer(factor=1.0))
-    b = tf.get_variable('biases', [out_dim],
-                        initializer=tf.constant_initializer())
-    return tf.nn.xw_plus_b(x, w, b)
+    x = x.view(self.hps.batch_size, -1)
+    w = torch.empty(x.size(1), out_dim).uniform_(-1,1)
+    b = torch.zeros(out_dim)
+    return torch.matmul(x,w) + b
 
   def _global_avg_pool(self, x):
-    assert x.get_shape().ndims == 4
-    return tf.reduce_mean(x, [1, 2])
+    assert x.dim() == 4
+    return torch.mean(x, [2, 3])

@@ -224,34 +224,9 @@ def mentornet(epoch,
       v_ones = torch.ones(loss.size(), dtype = torch.float 32)
       v_zeros = torch.zeros(loss.size(), dtype = torch.float 32)
       upper_bound = torch.where(cur_epoch < (burn_in_epoch - 1), v_ones, v_zeros)
-
-    epoch_vec = tf.scalar_mul(tf.to_float(cur_epoch), ones)
-    lossdiff = loss - tf.scalar_mul(loss_moving_avg, ones)
-
-  input_data = tf.squeeze(tf.stack([loss, lossdiff, labels, epoch_vec], 1))
-  v = tf.nn.sigmoid(mentornet_nn(input_data), name='v')
-  # Force select all samples in the first burn_in_epochs
-  v = tf.maximum(v, upper_bound, 'v_bound')
-
-  v_dropout = tf.py_func(probabilistic_sample,
-                         [v, this_dropout_rate, 'random'], tf.float32)
-  v_dropout = tf.reshape(v_dropout, [-1, 1], name='v_dropout')
-
-  # Print information in the debug mode.
-  if debug:
-    v_dropout = tf.Print(
-        v_dropout,
-        data=[cur_epoch, loss_moving_avg, percentile_loss],
-        summarize=64,
-        message='epoch, loss_moving_avg, percentile_loss')
-    v_dropout = tf.Print(
-        v_dropout, data=[lossdiff], summarize=64, message='loss_diff')
-    v_dropout = tf.Print(v_dropout, data=[v], summarize=64, message='v')
-    v_dropout = tf.Print(
-        v_dropout, data=[v_dropout], summarize=64, message='v_dropout')
-  return v_dropout
-
-
+      #squeeze the tensors to remove single-dimensional entries 
+      this_dropout_rate = torch.squeeze(example_dropout_rates)[cur_epoch]
+      this_percentile = torch.squeeze(loss_p_percentile)[cur_epoch]
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

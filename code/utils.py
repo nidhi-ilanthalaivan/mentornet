@@ -253,6 +253,9 @@ def mentornet(epoch,
       # Force select all samples in the first burn_in_epochs
       v = torch.max(v, upper_bound)
 
+      v_dropout = probabilistic_sample(v, this_dropout_rate, 'random')
+      v_dropout = torch.reshape(v_dropout, [-1, 1])
+
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

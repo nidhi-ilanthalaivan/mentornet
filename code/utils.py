@@ -227,6 +227,9 @@ def mentornet(epoch,
       #squeeze the tensors to remove single-dimensional entries 
       this_dropout_rate = torch.squeeze(example_dropout_rates)[cur_epoch]
       this_percentile = torch.squeeze(loss_p_percentile)[cur_epoch]
+      # compute the percent loss using the torch.quantile(equivalent to tf.contrib.distributions.percentile)
+      percentile_loss = torch.quantile(loss, this_percentile * 100)
+      
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

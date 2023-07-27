@@ -69,6 +69,11 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
     return len(self.data)
   def __getitem__(self, index): 
     img, target = self.data[index], self.targets[index]
+    
+    if self.transform: 
+      img = self.transform(img)
+      return img, target 
+    
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

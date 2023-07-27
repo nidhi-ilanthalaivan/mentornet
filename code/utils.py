@@ -232,6 +232,16 @@ def mentornet(epoch,
       
       #loss_moving_avg is a tensor, you don't need ".assign()"
       loss_moving_avg = loss_moving_avg * loss_moving_average_decay + (1 - loss_moving_average_decay) * percentile_loss)
+      #specifing the log directory where the logs will be stored (pytorch equivalent to "slim.summaries.add_scalar")
+      writer = SummaryWriter(log_dir = 'logs')
+      #add the scalar summaries to the writer 
+      writer.add_scalar('debug/percentile_loss', percentile_loss)
+      writer.add_scalar('debug/dropout_rate',this_dropout_rate)
+      writer.add_scalar('debug/epoch_step', cur_epoch)
+      writer.add_scalar('debug/loss_moving_percentile', loss_moving_avg)
+      #close the writer 
+      writer.close()
+      
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

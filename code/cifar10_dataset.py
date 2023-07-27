@@ -62,6 +62,9 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
        download = True, 
        transform = self. transform
      )
+     return dataset.data, torch.tensor(dataset.targets)
+   # end
+   
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

@@ -256,6 +256,9 @@ def mentornet(epoch,
       v_dropout = probabilistic_sample(v, this_dropout_rate, 'random')
       v_dropout = torch.reshape(v_dropout, [-1, 1])
 
+  # Print information in the debug mode. (we can just use the print function)
+  model = MentorNet()
+      
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

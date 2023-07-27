@@ -80,23 +80,23 @@ class CifarNet(nn.Module):
 #   with slim.arg_scope([slim.conv2d, slim.fully_connected],
 #                          normalizer_params=batch_norm_params,
 #                          normalizer_fn=slim.batch_norm):
-def forward(self, x): 
+  def forward(self, x): 
   #first
-  x = F.relu(self.conv1(x))
-  x = self.pool1(x)
-  x = self.norm1(x)
-  end_points = {'conv1':x}
+    x = F.relu(self.conv1(x))
+    x = self.pool1(x)
+    x = self.norm1(x)
+    end_points = {'conv1':x}
 #second 
-  x = F.relu(self.conv2(x))
-  x = self.pool2(x)
-  x = self.norm2(x)
-  end_points['conv2'] = x
-#flatten
-  x = torch.flatten(x,1)
-  end_points['Flatten'] = x
+    x = F.relu(self.conv2(x))
+    x = self.pool2(x)
+    x = self.norm2(x)
+    end_points['conv2'] = x
+  #flatten
+    x = torch.flatten(x,1)
+    end_points['Flatten'] = x
   
-  x = F.relu(self.fc3(x))
-  x = F.relu(self.fc4(x))
-  logits = self.logits(x)
-  x = self.dropout3(x)
-  return logits, end_points 
+    x = F.relu(self.fc3(x))
+    x = F.relu(self.fc4(x))
+    logits = self.logits(x)
+    x = self.dropout3(x)
+    return logits, end_points 

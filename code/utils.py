@@ -250,6 +250,9 @@ def mentornet(epoch,
       v = torch.sigmoid(mentornet_nn(input_data))
       # there is no "name" argument in torch.sigmoid, so this line is added to be more helpful during visualization
       v = v.rename("v")
+      # Force select all samples in the first burn_in_epochs
+      v = torch.max(v, upper_bound)
+
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

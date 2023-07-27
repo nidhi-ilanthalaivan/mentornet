@@ -59,7 +59,7 @@ def provide_resnet_data(dataset_name,
   # num_epochs = 1 if split_name == 'test' else None
   
   if dataset_name == 'cifar100':
-    [image, label] = provider.get(['image', 'fine_label'])
+    image_key, label_key = 'image', 'fine_label'
   else:
     [image, label] = provider.get(['image', 'label'])
 

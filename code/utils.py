@@ -269,6 +269,13 @@ def mentornet(epoch,
   
   #Trace the foward function/capture the fx graph
   fx_model = symbolic_trace(model)
+  #print graph to see its strcutures 
+  print(fx_model.graph)
+  
+  
+  
+  
+  
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

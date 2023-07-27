@@ -20,7 +20,8 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as 
+from torch.utils.tensorboard import SummaryWriter # you need to have TensorBoard installed 
 
 def summarize_data_utilization(v, global_step, batch_size, epsilon=0.001):
   """Summarizes the samples of non-zero weights during training.

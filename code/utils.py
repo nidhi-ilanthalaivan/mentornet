@@ -211,10 +211,10 @@ def mentornet(epoch,
     v: [batch_size, 1] weight vector.
   """
   class MentorNet(nn.Module): 
-    loss_moving_avg = tf.get_variable(
-        'cumulative', [], initializer=tf.zeros_initializer(), trainable=False)
-
-    if not fixed_epoch_after_burn_in:
+    def __init__(self, burn_in_epoch = 18, fixed_epoch_after_in = True): 
+      super(MentorNet, self).__init__()
+      self.burn_in_epoch = burn_in_epoch 
+      self.fixed_epoch_after_burn_in = fixed_epoch_after_burn_in 
       cur_epoch = epoch
     else:
       cur_epoch = tf.to_int32(tf.minimum(epoch, burn_in_epoch))

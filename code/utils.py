@@ -215,19 +215,8 @@ def mentornet(epoch,
       super(MentorNet, self).__init__()
       self.burn_in_epoch = burn_in_epoch 
       self.fixed_epoch_after_burn_in = fixed_epoch_after_burn_in 
-      cur_epoch = epoch
-    else:
-      cur_epoch = tf.to_int32(tf.minimum(epoch, burn_in_epoch))
-
-    v_ones = tf.ones(tf.shape(loss), tf.float32)
-    v_zeros = tf.zeros(tf.shape(loss), tf.float32)
-    upper_bound = tf.cond(cur_epoch < (burn_in_epoch - 1), lambda: v_ones,
-                          lambda: v_zeros)
-
-    this_dropout_rate = tf.squeeze(
-        tf.nn.embedding_lookup(example_dropout_rates, cur_epoch))
-    this_percentile = tf.squeeze(
-        tf.nn.embedding_lookup(loss_p_percentile, cur_epoch))
+    def foward(self, epoch): 
+      loss_moving_avg = torch.tensor(0.0, requires_grad = False)
 
     percentile_loss = tf.contrib.distributions.percentile(
         loss, this_percentile * 100)

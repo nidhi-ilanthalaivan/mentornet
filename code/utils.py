@@ -221,14 +221,9 @@ def mentornet(epoch,
         cur_epoch = epoch 
       else: 
         cur_epoch = torch.min(epoch, torch.tensor(burn_in_epoch, dtype = torch.float32))
-
-    slim.summaries.add_scalar_summary(percentile_loss, 'debug/percentile_loss')
-    slim.summaries.add_scalar_summary(this_dropout_rate, 'debug/dropout_rate')
-    slim.summaries.add_scalar_summary(cur_epoch, 'debug/epoch_step')
-    slim.summaries.add_scalar_summary(loss_moving_avg,
-                                      'debug/loss_moving_percentile')
-
-    ones = tf.ones([tf.shape(loss)[0], 1], tf.float32)
+      v_ones = torch.ones(loss.size(), dtype = torch.float 32)
+      v_zeros = torch.zeros(loss.size(), dtype = torch.float 32)
+      upper_bound = torch.where(cur_epoch < (burn_in_epoch - 1), v_ones, v_zeros)
 
     epoch_vec = tf.scalar_mul(tf.to_float(cur_epoch), ones)
     lossdiff = loss - tf.scalar_mul(loss_moving_avg, ones)

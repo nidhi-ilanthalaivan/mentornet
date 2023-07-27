@@ -230,6 +230,8 @@ def mentornet(epoch,
       # compute the percent loss using the torch.quantile(equivalent to tf.contrib.distributions.percentile)
       percentile_loss = torch.quantile(loss, this_percentile * 100)
       
+      #loss_moving_avg is a tensor, you don't need ".assign()"
+      loss_moving_avg = loss_moving_avg * loss_moving_average_decay + (1 - loss_moving_average_decay) * percentile_loss)
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

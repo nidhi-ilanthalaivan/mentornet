@@ -267,6 +267,8 @@ def mentornet(epoch,
   example_dropout_rates= torch.randn(100)
   loss_moving_average_decay = 0.9
   
+  #Trace the foward function/capture the fx graph
+  fx_model = symbolic_trace(model)
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

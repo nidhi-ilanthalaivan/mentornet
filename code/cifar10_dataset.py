@@ -55,6 +55,8 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
     self.transform = transform 
     
     self.data, self.targets = self._load_data()
+    
+  # used chatGPT (start)- 
   def _load_data(self): 
      dataset = torchvision.datasets.CIFAR10(
        root = self.dataset_dir,

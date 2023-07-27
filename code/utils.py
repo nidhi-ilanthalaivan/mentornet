@@ -210,7 +210,7 @@ def mentornet(epoch,
   Returns:
     v: [batch_size, 1] weight vector.
   """
-  with tf.variable_scope('mentor_inputs'):
+  class MentorNet(nn.Module): 
     loss_moving_avg = tf.get_variable(
         'cumulative', [], initializer=tf.zeros_initializer(), trainable=False)
 

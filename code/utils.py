@@ -245,6 +245,11 @@ def mentornet(epoch,
       ones = torch.ones(torch.size(loss)[0], 1, dtype = torch.float32)
       epoch_vec = torch.mul(cur_epoch.float(), ones)
       lossdiff = loss - torch.mul(loss_moving_avg, ones)
+      #you don't need to specify the dimension since torch.stack automatically does it
+      input_data = torch.squeeze(torch.stack([loss, lossdiff, labels, epoch_vec]))
+      v = torch.sigmoid(mentornet_nn(input_data))
+      # there is no "name" argument in torch.sigmoid, so this line is added to be more helpful during visualization
+      v = v.rename("v")
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

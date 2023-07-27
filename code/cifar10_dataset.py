@@ -74,6 +74,10 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
       img = self.transform(img)
       return img, target 
     
+  def get_split(split_name, dataset_dir = None): 
+    if split_name not in _SPLITS_TO_SIZES: 
+      raise ValueError('split name %s was not recognized.' %split_name)
+    return CIFAR10Dataset(split_name, dataset_dir)
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:

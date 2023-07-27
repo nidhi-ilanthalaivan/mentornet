@@ -259,6 +259,14 @@ def mentornet(epoch,
   # Print information in the debug mode. (we can just use the print function)
   model = MentorNet()
       
+  # filler values, we can replace with the actual data 
+  epoch = torch.tensor(0)
+  loss = torch.randn((batch_size, 1))
+  labels = torch.randn((batch_size, 1))
+  loss_p_percentile = torch.randn(100)
+  example_dropout_rates= torch.randn(100)
+  loss_moving_average_decay = 0.9
+  
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

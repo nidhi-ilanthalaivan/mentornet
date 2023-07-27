@@ -217,14 +217,10 @@ def mentornet(epoch,
       self.fixed_epoch_after_burn_in = fixed_epoch_after_burn_in 
     def foward(self, epoch): 
       loss_moving_avg = torch.tensor(0.0, requires_grad = False)
-
-    percentile_loss = tf.contrib.distributions.percentile(
-        loss, this_percentile * 100)
-    percentile_loss = tf.convert_to_tensor(percentile_loss)
-
-    loss_moving_avg = loss_moving_avg.assign(
-        loss_moving_avg * loss_moving_average_decay +
-        (1 - loss_moving_average_decay) * percentile_loss)
+      if not self.fixed_epoch_after_burn_in: 
+        cur_epoch = epoch 
+      else: 
+        cur_epoch = torch.min(epoch, torch.tensor(burn_in_epoch, dtype = torch.float32))
 
     slim.summaries.add_scalar_summary(percentile_loss, 'debug/percentile_loss')
     slim.summaries.add_scalar_summary(this_dropout_rate, 'debug/dropout_rate')

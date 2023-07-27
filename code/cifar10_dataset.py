@@ -92,33 +92,4 @@ class CIFAR10Dataset(torch.utils.data.Dataset):
   Raises:
     ValueError: if `split_name` is not a valid train/test split.
   """
-  if split_name not in _SPLITS_TO_SIZES:
-    raise ValueError('split name %s was not recognized.' % split_name)
-
-  if dataset_dir is None:
-    dataset_dir = _DATASET_DIR
-
-  file_pattern = os.path.join(dataset_dir, _FILE_PATTERN % split_name)
-
-  keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/class/label': tf.FixedLenFeature(
-          [1], tf.int64, default_value=tf.zeros([1], dtype=tf.int64)),
-  }
-
-  items_to_handlers = {
-      'image': tfexample_decoder.Image(shape=[32, 32, 3]),
-      'label': tfexample_decoder.Tensor('image/class/label'),
-  }
-
-  decoder = tfexample_decoder.TFExampleDecoder(
-      keys_to_features, items_to_handlers)
-
-  return dataset.Dataset(
-      data_sources=file_pattern,
-      reader=tf.TFRecordReader,
-      decoder=decoder,
-      num_samples=_SPLITS_TO_SIZES[split_name],
-      num_classes=_NUM_CLASSES,
-      items_to_descriptions=_ITEMS_TO_DESCRIPTIONS)
+  

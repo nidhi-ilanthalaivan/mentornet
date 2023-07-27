@@ -242,6 +242,9 @@ def mentornet(epoch,
       #close the writer 
       writer.close()
       
+      ones = torch.ones(torch.size(loss)[0], 1, dtype = torch.float32)
+      epoch_vec = torch.mul(cur_epoch.float(), ones)
+      lossdiff = loss - torch.mul(loss_moving_avg, ones)
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

@@ -246,6 +246,18 @@ def train_inception_baseline(max_step_run, args):
       writer.add_scalar('Loss', loss.item(), epoch * len(cifar_dataset) + step)
   
   writer.close()
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description = "Train the Inception baseline model for CIFAR-10")
+  parser.add_argument("--data_dir", type = str, default = "./data", help = "Path to the CIFAR-10 dataset")
+  parser.add_argument("--batch_size", type = int, default = 128, help = "Batch size for training")
+  parser.add_argument("--learning_rate", type = float, default = 0.1, help = "Learning rate")
+  parser.add_argument("--num_epochs", type = int, default = 50, help = "Number of training epochs")
+  parser.add_argument("--train_log_dir", type = str, default = "./logs", help = "Directory to save training")
+  
+  args = parser.parse_args()
+  
+
+
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

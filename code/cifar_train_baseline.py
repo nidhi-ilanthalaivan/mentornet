@@ -219,39 +219,9 @@ def train_inception_baseline(max_step_run, args):
   Args:
     max_step_run: The maximum number of gradient steps.
   """
-  if not os.path.exists(FLAGS.train_log_dir):
-    os.makedirs(FLAGS.train_log_dir)
-  g = tf.Graph()
-
-  with g.as_default():
-    # If ps_tasks is zero, the local device is used. When using multiple
-    # (non-local) replicas, the ReplicaDeviceSetter distributes the variables
-    # across the different devices.
-    with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
-      config = tf.ConfigProto()
-      # Limit gpu memory to run train and eval on the same gpu
-      config.gpu_options.per_process_gpu_memory_fraction = 0.45
-
-      tf_global_step = tf.train.get_or_create_global_step()
-
-      # pylint: disable=line-too-long
-      images, one_hot_labels, num_samples_per_epoch, num_of_classes = cifar_data_provider.provide_cifarnet_data(
-          FLAGS.dataset_name,
-          'train',
-          FLAGS.batch_size,
-          dataset_dir=FLAGS.data_dir)
-
-      tf.logging.info('num_of_example={}'.format(num_samples_per_epoch))
-      # Define the model:
-      with slim.arg_scope(
-          inception_model.cifarnet_arg_scope(weight_decay=0.004)):
-        logits, _ = inception_model.cifarnet(
-            images, num_of_classes, is_training=True, dropout_keep_prob=0.8)
-
-      # Specify the loss function:
-      total_loss = tf.nn.softmax_cross_entropy_with_logits(
-          labels=one_hot_labels, logits=logits)
-      total_loss = tf.reduce_mean(total_loss)
+  
+  #Cifar10 dataset
+  cifar_dataset = cifar10_dataset(dataset_dir = args.data_dir, batch_size = args.batch_size)
 
       # Using latest tensorflow ProtoBuf.
       tf.compat.v1.summary.scalar('Total Loss', total_loss)

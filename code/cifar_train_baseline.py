@@ -258,6 +258,9 @@ if __name__ == "__main__":
   
 
 
+  train_inception_baseline(max_step_run = 1000, args = args)
+  
+  
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

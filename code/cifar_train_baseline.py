@@ -234,6 +234,7 @@ def train_inception_baseline(max_step_run, args):
   #loop training
   for epoch in range(args.num_epochs): 
     for step, (images, labels) in enumerate(cifar_dataset):
+      optimizer.zero_grad()
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

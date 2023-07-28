@@ -213,7 +213,7 @@ def train_resnet_baseline(max_step_run):
           save_interval_secs=FLAGS.save_interval_secs)
 
 
-def train_inception_baseline(max_step_run):
+def train_inception_baseline(max_step_run, args):
   """Trains the inception baseline model.
 
   Args:

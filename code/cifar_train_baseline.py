@@ -222,23 +222,9 @@ def train_inception_baseline(max_step_run, args):
   
   #Cifar10 dataset
   cifar_dataset = cifar10_dataset(dataset_dir = args.data_dir, batch_size = args.batch_size)
-
-      # Using latest tensorflow ProtoBuf.
-      tf.compat.v1.summary.scalar('Total Loss', total_loss)
-
-      decay_steps = int(
-          num_samples_per_epoch / FLAGS.batch_size * FLAGS.num_epochs_per_decay)
-
-      lr = tf.train.exponential_decay(
-          FLAGS.learning_rate,
-          tf_global_step,
-          decay_steps,
-          FLAGS.learning_rate_decay_factor,
-          staircase=True)
-      slim.summaries.add_scalar_summary(lr, 'learning_rate', print_summary=True)
-
-      # Specify the optimization scheme:
-      optimizer = tf.train.GradientDescentOptimizer(lr)
+  #Inception model 
+  model = inception_model(num_classes = cifar_dataset.num_classes, dropout_keep_prob = 0.8)
+  
 
       # Set up training.
       train_op = slim.learning.create_train_op(total_loss, optimizer)

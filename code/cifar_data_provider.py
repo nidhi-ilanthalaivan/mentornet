@@ -72,11 +72,7 @@ def provide_resnet_data(dataset_name,
   ##transforms.Normalize(mean = [0.485...]) normalizes tensor by subracts mean and dividing by the standard deviation 
   image_size = 32
   if split_name == 'train':
-    image = tf.image.resize_image_with_crop_or_pad(image, image_size + 4,
-                                                   image_size + 4)
-    image = tf.random_crop(image, [image_size, image_size, 3])
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.per_image_standardization(image)
+    transform = transform_train
   else:
     image = tf.image.resize_image_with_crop_or_pad(image, image_size,
                                                    image_size)

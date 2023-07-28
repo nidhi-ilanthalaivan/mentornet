@@ -225,21 +225,8 @@ def train_inception_baseline(max_step_run, args):
   #Inception model 
   model = inception_model(num_classes = cifar_dataset.num_classes, dropout_keep_prob = 0.8)
   
-
-      # Set up training.
-      train_op = slim.learning.create_train_op(total_loss, optimizer)
-
-      # Run training.
-      slim.learning.train(
-          train_op=train_op,
-          logdir=FLAGS.train_log_dir,
-          master=FLAGS.master,
-          is_chief=FLAGS.task == 0,
-          session_config=config,
-          number_of_steps=max_step_run,
-          save_summaries_secs=FLAGS.save_summaries_secs,
-          save_interval_secs=FLAGS.save_interval_secs)
-
+  #Loss function 
+  criterion = nn.CrossEntropyLoss()
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

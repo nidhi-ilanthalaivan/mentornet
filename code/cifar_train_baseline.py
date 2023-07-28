@@ -237,6 +237,8 @@ def train_inception_baseline(max_step_run, args):
       optimizer.zero_grad()
     #Foward pass
       logits = model(images)
+    #computed loss
+      loss = criterion(logits,labels)
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

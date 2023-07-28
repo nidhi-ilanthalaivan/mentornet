@@ -61,7 +61,7 @@ def provide_resnet_data(dataset_name,
   if dataset_name == 'cifar100':
     image_key, label_key = 'image', 'fine_label'
   else:
-    [image, label] = provider.get(['image', 'label'])
+    image_key, label_key = 'image', 'label'
 
   image = tf.to_float(image)
 

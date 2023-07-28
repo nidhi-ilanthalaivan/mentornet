@@ -241,6 +241,7 @@ def train_inception_baseline(max_step_run, args):
       loss = criterion(logits,labels)
     #back pass/optimization 
       loss.backward()
+      optimizer.step()
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

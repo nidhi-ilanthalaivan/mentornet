@@ -23,8 +23,13 @@ import time
 import cifar_data_provider
 import inception_model
 import resnet_model
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+import torch 
+import torch.nn as nn
+import torch.optim as optim 
+import tensorboard
+import torchvision.transforms as transforms 
+from torch.utils.tensorboard import SummaryWriter 
+from torch.utils.data import Dataloader
 
 flags = tf.app.flags
 

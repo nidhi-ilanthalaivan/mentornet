@@ -229,6 +229,8 @@ def train_inception_baseline(max_step_run, args):
   criterion = nn.CrossEntropyLoss()
   #optmizer 
   optimizer = torch.optim.SGD(model.parameters(), lr = args.learning_rate, momentum = 0.9)
+  #TB writer 
+  writer = SummaryWriter(log_dir = args.train_log_dir)
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

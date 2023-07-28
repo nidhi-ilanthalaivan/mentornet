@@ -63,8 +63,8 @@ def provide_resnet_data(dataset_name,
   else:
     image_key, label_key = 'image', 'label'
 
-  image = tf.to_float(image)
-
+  transform_train = transforms.Compose([transforms.RandomCrop(32, paddings = 4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]),])
+  transform_test = transforms.Compose([transforms.Resize((32,32)), transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]), ])
   image_size = 32
   if split_name == 'train':
     image = tf.image.resize_image_with_crop_or_pad(image, image_size + 4,

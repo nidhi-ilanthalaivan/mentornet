@@ -77,13 +77,8 @@ def provide_resnet_data(dataset_name,
     transform = transform_test
 
   # Creates a QueueRunner for the pre-fetching operation.
-  images, labels = tf.train.batch(
-      [image, label],
-      batch_size=batch_size,
-      num_threads=1,
-      capacity=5 * batch_size,
-      allow_smaller_final_batch=True)
-
+  images = [transform(image) for image in dataset[image_key]]
+  labels = dataset[label_key]
   one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
   one_hot_labels = tf.squeeze(one_hot_labels, 1)
   return images, one_hot_labels, dataset.num_samples, dataset.num_classes

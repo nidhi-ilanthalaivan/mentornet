@@ -65,7 +65,11 @@ def provide_resnet_data(dataset_name,
 
   transform_train = transforms.Compose([transforms.RandomCrop(32, paddings = 4), transforms.RandomHorizontalFlip(), transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]),])
   transform_test = transforms.Compose([transforms.Resize((32,32)), transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225]), ])
+  ## transforms.RandomCrop(32, padding = 4) performs a random crop of size 32x32 pixels on imput and the image is first zero padded with a 4 pixel border 
   ## transforms.RandomHorizontalFlip() - randomly flips input image horizontally with probability of 0.5
+  ## transforms.Resize((32,32)) - resizes input image to fixed size of 32x32 pizels and its used for test data to ensure that all test images have the same size as training images
+  ## transforms.ToTensor() - converts input image to a pytorch tensor 
+  ##transforms.Normalize(mean = [0.485...]) normalizes tensor by subracts mean and dividing by the standard deviation 
   image_size = 32
   if split_name == 'train':
     image = tf.image.resize_image_with_crop_or_pad(image, image_size + 4,

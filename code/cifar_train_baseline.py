@@ -34,21 +34,21 @@ import argparse
 
 flags = tf.app.flags
 
-flags.DEFINE_integer('batch_size', 128, 'The number of images in each batch.')
+#flags.DEFINE_integer('batch_size', 128, 'The number of images in each batch.')
 
 flags.DEFINE_string('master', None, 'BNS name of the TensorFlow master to use.')
 
-flags.DEFINE_string('data_dir', '', 'Data dir')
+#flags.DEFINE_string('data_dir', '', 'Data dir')
 
-flags.DEFINE_string('train_log_dir', '', 'Directory to the save trained model.')
+#flags.DEFINE_string('train_log_dir', '', 'Directory to the save trained model.')
 
 flags.DEFINE_string('dataset_name', 'cifar10', 'cifar10 or cifar100')
 
 flags.DEFINE_string('studentnet', 'resnet101', 'inception or resnet101')
 
-flags.DEFINE_float('learning_rate', 0.1, 'The learning rate')
-flags.DEFINE_float('learning_rate_decay_factor', 0.1,
-                   'learning rate decay factor.')
+#flags.DEFINE_float('learning_rate', 0.1, 'The learning rate')
+#flags.DEFINE_float('learning_rate_decay_factor', 0.1,
+                   #'learning rate decay factor.')
 
 flags.DEFINE_float('num_epochs_per_decay', 50,
                    'Number of epochs after which learning rate decays.')

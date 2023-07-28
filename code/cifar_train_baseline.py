@@ -233,6 +233,7 @@ def train_inception_baseline(max_step_run, args):
   writer = SummaryWriter(log_dir = args.train_log_dir)
   #loop training
   for epoch in range(args.num_epochs): 
+    for step, (images, labels) in enumerate(cifar_dataset):
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

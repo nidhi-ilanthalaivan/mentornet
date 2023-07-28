@@ -74,9 +74,7 @@ def provide_resnet_data(dataset_name,
   if split_name == 'train':
     transform = transform_train
   else:
-    image = tf.image.resize_image_with_crop_or_pad(image, image_size,
-                                                   image_size)
-    image = tf.image.per_image_standardization(image)
+    transform = transform_test
 
   # Creates a QueueRunner for the pre-fetching operation.
   images, labels = tf.train.batch(

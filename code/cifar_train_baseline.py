@@ -245,6 +245,7 @@ def train_inception_baseline(max_step_run, args):
     #logging 
       writer.add_scalar('Loss', loss.item(), epoch * len(cifar_dataset) + step)
   
+  writer.close()
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

@@ -81,7 +81,7 @@ def provide_resnet_data(dataset_name,
   labels = dataset[label_key]
   one_hot_labels = torch.nn.functional.one_hot(labels, dataset.num_classes)
   one_hot_labels = torch.squeeze(one_hot_labels, 1)
-  return images, one_hot_labels, dataset.num_samples, dataset.num_classes
+  return images, one_hot_labels, len(dataset), dataset.num_classes
 
 
 def provide_cifarnet_data(dataset_name,

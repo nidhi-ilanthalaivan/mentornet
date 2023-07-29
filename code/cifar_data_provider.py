@@ -19,7 +19,7 @@ import cifar100_dataset
 import cifar10_dataset
 import torch
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoaded, random_split
+from torch.utils.data import DataLoader, random_split
 import torch.nn as nn
 
 datasets_map = {

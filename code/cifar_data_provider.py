@@ -127,16 +127,11 @@ def provide_cifarnet_data(dataset_name,
     transform = transforms.Compose([transforms.Resize((image_size, image_size)),transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229,0.224, 0.225]),])
 
   # Creates a QueueRunner for the pre-fetching operation.
-  images, labels = tf.train.batch(
-      [image, label],
-      batch_size=batch_size,
-      num_threads=1,
-      capacity=5 * batch_size,
-      allow_smaller_final_batch=True)
-
-  one_hot_labels = slim.one_hot_encoding(labels, dataset.num_classes)
-  one_hot_labels = tf.squeeze(one_hot_labels, 1)
-  return images, one_hot_labels, dataset.num_samples, dataset.num_classes
+  images = [transform(image) for image in dataset[image_key]]
+  labels = dataset[label_key]
+  one_hot_labels = torch.nn.functional.one_hot(labels, dataset.num_classes)
+  one_hot_labels = torch.squeeze(one_hot_labels, 1)
+  return images, one_hot_labels, len(dataset), dataset.num_classes
 
 
 def get_dataset(name, split_name, **kwargs):

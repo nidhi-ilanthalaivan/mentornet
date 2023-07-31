@@ -23,26 +23,32 @@ import time
 import cifar_data_provider
 import inception_model
 import resnet_model
-import tensorflow as tf
-import tensorflow.contrib.slim as slim
+import cifar10_dataset
+import torch 
+import torch.nn as nn
+import torch.optim 
+import tensorboard
+import torchvision.transforms as transforms 
+from torch.utils.tensorboard import SummaryWriter 
+import argparse
 
 flags = tf.app.flags
 
-flags.DEFINE_integer('batch_size', 128, 'The number of images in each batch.')
+#flags.DEFINE_integer('batch_size', 128, 'The number of images in each batch.')
 
 flags.DEFINE_string('master', None, 'BNS name of the TensorFlow master to use.')
 
-flags.DEFINE_string('data_dir', '', 'Data dir')
+#flags.DEFINE_string('data_dir', '', 'Data dir')
 
-flags.DEFINE_string('train_log_dir', '', 'Directory to the save trained model.')
+#flags.DEFINE_string('train_log_dir', '', 'Directory to the save trained model.')
 
 flags.DEFINE_string('dataset_name', 'cifar10', 'cifar10 or cifar100')
 
 flags.DEFINE_string('studentnet', 'resnet101', 'inception or resnet101')
 
-flags.DEFINE_float('learning_rate', 0.1, 'The learning rate')
-flags.DEFINE_float('learning_rate_decay_factor', 0.1,
-                   'learning rate decay factor.')
+#flags.DEFINE_float('learning_rate', 0.1, 'The learning rate')
+#flags.DEFINE_float('learning_rate_decay_factor', 0.1,
+                   #'learning rate decay factor.')
 
 flags.DEFINE_float('num_epochs_per_decay', 50,
                    'Number of epochs after which learning rate decays.')
@@ -207,77 +213,54 @@ def train_resnet_baseline(max_step_run):
           save_interval_secs=FLAGS.save_interval_secs)
 
 
-def train_inception_baseline(max_step_run):
+def train_inception_baseline(max_step_run, args):
   """Trains the inception baseline model.
 
   Args:
     max_step_run: The maximum number of gradient steps.
   """
-  if not os.path.exists(FLAGS.train_log_dir):
-    os.makedirs(FLAGS.train_log_dir)
-  g = tf.Graph()
+  
+  #Cifar10 dataset
+  cifar_dataset = cifar10_dataset(dataset_dir = args.data_dir, batch_size = args.batch_size)
+  #Inception model 
+  model = inception_model(num_classes = cifar_dataset.num_classes, dropout_keep_prob = 0.8)
+  
+  #Loss function 
+  criterion = nn.CrossEntropyLoss()
+  #optmizer 
+  optimizer = torch.optim.SGD(model.parameters(), lr = args.learning_rate, momentum = 0.9)
+  #TB writer 
+  writer = SummaryWriter(log_dir = args.train_log_dir)
+  #loop training
+  for epoch in range(args.num_epochs): 
+    for step, (images, labels) in enumerate(cifar_dataset):
+      optimizer.zero_grad()
+    #Foward pass
+      logits = model(images)
+    #computed loss
+      loss = criterion(logits,labels)
+    #back pass/optimization 
+      loss.backward()
+      optimizer.step()
+    #logging 
+      writer.add_scalar('Loss', loss.item(), epoch * len(cifar_dataset) + step)
+  
+  writer.close()
+if __name__ == "__main__":
+  parser = argparse.ArgumentParser(description = "Train the Inception baseline model for CIFAR-10")
+  parser.add_argument("--data_dir", type = str, default = "./data", help = "Path to the CIFAR-10 dataset")
+  parser.add_argument("--batch_size", type = int, default = 128, help = "Batch size for training")
+  parser.add_argument("--learning_rate", type = float, default = 0.1, help = "Learning rate")
+  parser.add_argument("--num_epochs", type = int, default = 50, help = "Number of training epochs")
+  parser.add_argument("--train_log_dir", type = str, default = "./logs", help = "Directory to save training")
+  
+  args = parser.parse_args()
+  
 
-  with g.as_default():
-    # If ps_tasks is zero, the local device is used. When using multiple
-    # (non-local) replicas, the ReplicaDeviceSetter distributes the variables
-    # across the different devices.
-    with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
-      config = tf.ConfigProto()
-      # Limit gpu memory to run train and eval on the same gpu
-      config.gpu_options.per_process_gpu_memory_fraction = 0.45
 
-      tf_global_step = tf.train.get_or_create_global_step()
-
-      # pylint: disable=line-too-long
-      images, one_hot_labels, num_samples_per_epoch, num_of_classes = cifar_data_provider.provide_cifarnet_data(
-          FLAGS.dataset_name,
-          'train',
-          FLAGS.batch_size,
-          dataset_dir=FLAGS.data_dir)
-
-      tf.logging.info('num_of_example={}'.format(num_samples_per_epoch))
-      # Define the model:
-      with slim.arg_scope(
-          inception_model.cifarnet_arg_scope(weight_decay=0.004)):
-        logits, _ = inception_model.cifarnet(
-            images, num_of_classes, is_training=True, dropout_keep_prob=0.8)
-
-      # Specify the loss function:
-      total_loss = tf.nn.softmax_cross_entropy_with_logits(
-          labels=one_hot_labels, logits=logits)
-      total_loss = tf.reduce_mean(total_loss)
-
-      # Using latest tensorflow ProtoBuf.
-      tf.compat.v1.summary.scalar('Total Loss', total_loss)
-
-      decay_steps = int(
-          num_samples_per_epoch / FLAGS.batch_size * FLAGS.num_epochs_per_decay)
-
-      lr = tf.train.exponential_decay(
-          FLAGS.learning_rate,
-          tf_global_step,
-          decay_steps,
-          FLAGS.learning_rate_decay_factor,
-          staircase=True)
-      slim.summaries.add_scalar_summary(lr, 'learning_rate', print_summary=True)
-
-      # Specify the optimization scheme:
-      optimizer = tf.train.GradientDescentOptimizer(lr)
-
-      # Set up training.
-      train_op = slim.learning.create_train_op(total_loss, optimizer)
-
-      # Run training.
-      slim.learning.train(
-          train_op=train_op,
-          logdir=FLAGS.train_log_dir,
-          master=FLAGS.master,
-          is_chief=FLAGS.task == 0,
-          session_config=config,
-          number_of_steps=max_step_run,
-          save_summaries_secs=FLAGS.save_summaries_secs,
-          save_interval_secs=FLAGS.save_interval_secs)
-
+  train_inception_baseline(max_step_run = 1000, args = args)
+  
+  
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

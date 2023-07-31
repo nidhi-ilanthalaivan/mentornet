@@ -15,16 +15,19 @@
 
 """Provides data for the Cifar10 dataset."""
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+#from __future__ import absolute_import
+#from __future__ import division
+#from __future__ import print_function
 
 import os
 
-import tensorflow as tf
+import torch 
 
-from tensorflow.contrib.slim.python.slim.data import dataset
-from tensorflow.contrib.slim.python.slim.data import tfexample_decoder
+import torchvision 
+
+import torchvision.transforms as transforms 
+
+import torchvision.datasets as datasets 
 
 _FILE_PATTERN = 'cifar10_%s-*'
 
@@ -39,8 +42,44 @@ _ITEMS_TO_DESCRIPTIONS = {
     'label': 'A single integer between 0 and 9',
 }
 
-
-def get_split(split_name, dataset_dir=None):
+class CIFAR10Dataset(torch.utils.data.Dataset): 
+  def __init__(self, split_name, dataset_dir = None, transform = None ): 
+    if split_name is None: 
+      raise ValueError('split name $s was not recognized.' %split_name)
+    
+    if dataset_dir is None: 
+      dataset_dir = _DATASET_DIR
+    
+    self.split_name = split_name 
+    self.dataset_dir = dataset_dir 
+    self.transform = transform 
+    
+    self.data, self.targets = self._load_data()
+    
+  # used chatGPT (start)- 
+  def _load_data(self): 
+     dataset = torchvision.datasets.CIFAR10(
+       root = self.dataset_dir,
+       train = self.split_name =='train', 
+       download = True, 
+       transform = self. transform
+     )
+     return dataset.data, torch.tensor(dataset.targets)
+   # end
+   
+  def __len__(self): 
+    return len(self.data)
+  def __getitem__(self, index): 
+    img, target = self.data[index], self.targets[index]
+    
+    if self.transform: 
+      img = self.transform(img)
+      return img, target 
+    
+  def get_split(split_name, dataset_dir = None): 
+    if split_name not in _SPLITS_TO_SIZES: 
+      raise ValueError('split name %s was not recognized.' %split_name)
+    return CIFAR10Dataset(split_name, dataset_dir)
   """Gets a dataset tuple with instructions for reading cifar10.
 
   Args:
@@ -53,33 +92,4 @@ def get_split(split_name, dataset_dir=None):
   Raises:
     ValueError: if `split_name` is not a valid train/test split.
   """
-  if split_name not in _SPLITS_TO_SIZES:
-    raise ValueError('split name %s was not recognized.' % split_name)
-
-  if dataset_dir is None:
-    dataset_dir = _DATASET_DIR
-
-  file_pattern = os.path.join(dataset_dir, _FILE_PATTERN % split_name)
-
-  keys_to_features = {
-      'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/format': tf.FixedLenFeature((), tf.string, default_value=''),
-      'image/class/label': tf.FixedLenFeature(
-          [1], tf.int64, default_value=tf.zeros([1], dtype=tf.int64)),
-  }
-
-  items_to_handlers = {
-      'image': tfexample_decoder.Image(shape=[32, 32, 3]),
-      'label': tfexample_decoder.Tensor('image/class/label'),
-  }
-
-  decoder = tfexample_decoder.TFExampleDecoder(
-      keys_to_features, items_to_handlers)
-
-  return dataset.Dataset(
-      data_sources=file_pattern,
-      reader=tf.TFRecordReader,
-      decoder=decoder,
-      num_samples=_SPLITS_TO_SIZES[split_name],
-      num_classes=_NUM_CLASSES,
-      items_to_descriptions=_ITEMS_TO_DESCRIPTIONS)
+  

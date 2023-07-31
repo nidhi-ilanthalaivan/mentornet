@@ -20,7 +20,10 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+import torch.nn.functional as 
+from torch.utils.tensorboard import SummaryWriter # you need to have TensorBoard installed 
+import torch.fx 
+from torch.fx import symbolic_trace
 
 def summarize_data_utilization(v, global_step, batch_size, epsilon=0.001):
   """Summarizes the samples of non-zero weights during training.
@@ -209,68 +212,72 @@ def mentornet(epoch,
   Returns:
     v: [batch_size, 1] weight vector.
   """
-  with tf.variable_scope('mentor_inputs'):
-    loss_moving_avg = tf.get_variable(
-        'cumulative', [], initializer=tf.zeros_initializer(), trainable=False)
+  class MentorNet(nn.Module): 
+    def __init__(self, burn_in_epoch = 18, fixed_epoch_after_in = True): 
+      super(MentorNet, self).__init__()
+      self.burn_in_epoch = burn_in_epoch 
+      self.fixed_epoch_after_burn_in = fixed_epoch_after_burn_in 
+    def foward(self, epoch): 
+      loss_moving_avg = torch.tensor(0.0, requires_grad = False)
+      if not self.fixed_epoch_after_burn_in: 
+        cur_epoch = epoch 
+      else: 
+        cur_epoch = torch.min(epoch, torch.tensor(burn_in_epoch, dtype = torch.float32))
+      v_ones = torch.ones(loss.size(), dtype = torch.float 32)
+      v_zeros = torch.zeros(loss.size(), dtype = torch.float 32)
+      upper_bound = torch.where(cur_epoch < (burn_in_epoch - 1), v_ones, v_zeros)
+      #squeeze the tensors to remove single-dimensional entries 
+      this_dropout_rate = torch.squeeze(example_dropout_rates)[cur_epoch]
+      this_percentile = torch.squeeze(loss_p_percentile)[cur_epoch]
+      # compute the percent loss using the torch.quantile(equivalent to tf.contrib.distributions.percentile)
+      percentile_loss = torch.quantile(loss, this_percentile * 100)
+      
+      #loss_moving_avg is a tensor, you don't need ".assign()"
+      loss_moving_avg = loss_moving_avg * loss_moving_average_decay + (1 - loss_moving_average_decay) * percentile_loss)
+      #specifing the log directory where the logs will be stored (pytorch equivalent to "slim.summaries.add_scalar")
+      writer = SummaryWriter(log_dir = 'logs')
+      #add the scalar summaries to the writer 
+      writer.add_scalar('debug/percentile_loss', percentile_loss)
+      writer.add_scalar('debug/dropout_rate',this_dropout_rate)
+      writer.add_scalar('debug/epoch_step', cur_epoch)
+      writer.add_scalar('debug/loss_moving_percentile', loss_moving_avg)
+      #close the writer 
+      writer.close()
+      
+      ones = torch.ones(torch.size(loss)[0], 1, dtype = torch.float32)
+      epoch_vec = torch.mul(cur_epoch.float(), ones)
+      lossdiff = loss - torch.mul(loss_moving_avg, ones)
+      #you don't need to specify the dimension since torch.stack automatically does it
+      input_data = torch.squeeze(torch.stack([loss, lossdiff, labels, epoch_vec]))
+      v = torch.sigmoid(mentornet_nn(input_data))
+      # there is no "name" argument in torch.sigmoid, so this line is added to be more helpful during visualization
+      v = v.rename("v")
+      # Force select all samples in the first burn_in_epochs
+      v = torch.max(v, upper_bound)
 
-    if not fixed_epoch_after_burn_in:
-      cur_epoch = epoch
-    else:
-      cur_epoch = tf.to_int32(tf.minimum(epoch, burn_in_epoch))
+      v_dropout = probabilistic_sample(v, this_dropout_rate, 'random')
+      v_dropout = torch.reshape(v_dropout, [-1, 1])
 
-    v_ones = tf.ones(tf.shape(loss), tf.float32)
-    v_zeros = tf.zeros(tf.shape(loss), tf.float32)
-    upper_bound = tf.cond(cur_epoch < (burn_in_epoch - 1), lambda: v_ones,
-                          lambda: v_zeros)
-
-    this_dropout_rate = tf.squeeze(
-        tf.nn.embedding_lookup(example_dropout_rates, cur_epoch))
-    this_percentile = tf.squeeze(
-        tf.nn.embedding_lookup(loss_p_percentile, cur_epoch))
-
-    percentile_loss = tf.contrib.distributions.percentile(
-        loss, this_percentile * 100)
-    percentile_loss = tf.convert_to_tensor(percentile_loss)
-
-    loss_moving_avg = loss_moving_avg.assign(
-        loss_moving_avg * loss_moving_average_decay +
-        (1 - loss_moving_average_decay) * percentile_loss)
-
-    slim.summaries.add_scalar_summary(percentile_loss, 'debug/percentile_loss')
-    slim.summaries.add_scalar_summary(this_dropout_rate, 'debug/dropout_rate')
-    slim.summaries.add_scalar_summary(cur_epoch, 'debug/epoch_step')
-    slim.summaries.add_scalar_summary(loss_moving_avg,
-                                      'debug/loss_moving_percentile')
-
-    ones = tf.ones([tf.shape(loss)[0], 1], tf.float32)
-
-    epoch_vec = tf.scalar_mul(tf.to_float(cur_epoch), ones)
-    lossdiff = loss - tf.scalar_mul(loss_moving_avg, ones)
-
-  input_data = tf.squeeze(tf.stack([loss, lossdiff, labels, epoch_vec], 1))
-  v = tf.nn.sigmoid(mentornet_nn(input_data), name='v')
-  # Force select all samples in the first burn_in_epochs
-  v = tf.maximum(v, upper_bound, 'v_bound')
-
-  v_dropout = tf.py_func(probabilistic_sample,
-                         [v, this_dropout_rate, 'random'], tf.float32)
-  v_dropout = tf.reshape(v_dropout, [-1, 1], name='v_dropout')
-
-  # Print information in the debug mode.
-  if debug:
-    v_dropout = tf.Print(
-        v_dropout,
-        data=[cur_epoch, loss_moving_avg, percentile_loss],
-        summarize=64,
-        message='epoch, loss_moving_avg, percentile_loss')
-    v_dropout = tf.Print(
-        v_dropout, data=[lossdiff], summarize=64, message='loss_diff')
-    v_dropout = tf.Print(v_dropout, data=[v], summarize=64, message='v')
-    v_dropout = tf.Print(
-        v_dropout, data=[v_dropout], summarize=64, message='v_dropout')
-  return v_dropout
-
-
+  # Print information in the debug mode. (we can just use the print function)
+  model = MentorNet()
+      
+  # filler values, we can replace with the actual data 
+  epoch = torch.tensor(0)
+  loss = torch.randn((batch_size, 1))
+  labels = torch.randn((batch_size, 1))
+  loss_p_percentile = torch.randn(100)
+  example_dropout_rates= torch.randn(100)
+  loss_moving_average_decay = 0.9
+  
+  #Trace the foward function/capture the fx graph
+  fx_model = symbolic_trace(model)
+  #print graph to see its strcutures 
+  print(fx_model.graph)
+  
+  
+  
+  
+  
 def probabilistic_sample(v, rate=0.5, mode='binary'):
   """Implement the sampling techniques.
 

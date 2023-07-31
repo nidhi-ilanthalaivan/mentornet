@@ -139,7 +139,7 @@ class ResNet(nn.Module):
     self.optimizer = optimizer
 
   def _batch_norm(self, name, x):
-    """Batch normalization."""
+      """Batch normalization."""
       params_shape = [x.size()[-1]]
 
       beta = nn.Parameter(torch.zeros(params_shape))

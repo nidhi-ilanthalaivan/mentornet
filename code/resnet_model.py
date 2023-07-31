@@ -128,7 +128,7 @@ class ResNet(nn.Module):
     self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
 
 
-    trainable_variables = filter(lambda p: p.requires_grad, self.parameters())
+    trainable_parameters = filter(lambda p: p.requires_grad, self.parameters())
     optimizer = None
 
     if self.hps.optimizer == 'sgd':

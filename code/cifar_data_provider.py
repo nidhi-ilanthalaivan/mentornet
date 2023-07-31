@@ -123,11 +123,7 @@ def provide_cifarnet_data(dataset_name,
 
   # preprocess the images.
   if split_name == 'train':
-    padding = image_size / 4
-    image = tf.pad(image, [[padding, padding], [padding, padding], [0, 0]])
-    image = tf.random_crop(image, [image_size, image_size, 3])
-    image = tf.image.random_flip_left_right(image)
-    image = tf.image.per_image_standardization(image)
+    transform = transforms.Compose([transforms.RandomCrop(image_size, padding = 4), transforms.RandomHorizontalFlip(),transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229,0.224,0.225]),])
   else:
     image = tf.image.resize_image_with_crop_or_pad(image, image_size,
                                                    image_size)

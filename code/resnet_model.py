@@ -29,6 +29,7 @@ https://arxiv.org/pdf/1605.07146v1.pdf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import namedtuple
 
 
 

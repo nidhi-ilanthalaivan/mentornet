@@ -57,11 +57,11 @@ def summarize_data_utilization(v, global_step, batch_size, epsilon=0.001):
   data_util = torch.minimum(data_util, torch.tensor(1.0))
   data_util = data_util.detach
 
-   data_util = data_util.item()
-   'data_util/data_util'
+ 
+  return data_util data_util = data_util.item()
+  'data_util/data_util'
   batch_sum_v = torch.sum(v).item()
-   'data_util/batch_sum_v'
-  return data_util
+  'data_util/batch_sum_v'
 
 def parse_dropout_rate_list(str_list):
   """Parse a comma-separated string to a list.

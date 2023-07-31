@@ -119,8 +119,7 @@ def provide_cifarnet_data(dataset_name,
     image_key, label_key = 'image', 'label'
 
   image_size = 32
-  image = tf.to_float(image)
-
+  
   # preprocess the images.
   if split_name == 'train':
     transform = transforms.Compose([transforms.RandomCrop(image_size, padding = 4), transforms.RandomHorizontalFlip(),transforms.ToTensor(), transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229,0.224,0.225]),])

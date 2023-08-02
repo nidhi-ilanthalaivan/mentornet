@@ -270,15 +270,7 @@ def main():
 
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device_id
 
-def main(_):
-  os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id
-  if FLAGS.studentnet == 'resnet101':
-    train_resnet_baseline(FLAGS.max_number_of_steps)
-  elif FLAGS.studentnet == 'inception':
-    train_inception_baseline(FLAGS.max_number_of_steps)
-  else:
-    tf.logging.error('unknown backbone student network %s', FLAGS.studentnet)
-
+        train_inception_baseline(args.max_number_of_steps)  # Call the translated function here
 
 if __name__ == '__main__':
   tf.app.run()

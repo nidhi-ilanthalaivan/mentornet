@@ -262,6 +262,12 @@ if __name__ == "__main__":
   
   
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--device_id', type=str, default='0', help='CUDA device ID')
+    parser.add_argument('--studentnet', type=str, default='resnet101', help='Student network choice')
+    parser.add_argument('--max_number_of_steps', type=int, default=1000, help='Maximum number of training steps')
+    args = parser.parse_args()
+
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

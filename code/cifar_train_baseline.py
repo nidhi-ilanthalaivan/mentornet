@@ -268,6 +268,7 @@ def main():
     parser.add_argument('--max_number_of_steps', type=int, default=1000, help='Maximum number of training steps')
     args = parser.parse_args()
 
+    os.environ['CUDA_VISIBLE_DEVICES'] = args.device_id
 
 def main(_):
   os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id

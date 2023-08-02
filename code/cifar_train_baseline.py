@@ -278,4 +278,4 @@ def main():
         print('unknown backbone student network', args.studentnet)
 
 if __name__ == '__main__':
-  tf.app.run()
+    main()

@@ -100,7 +100,7 @@ def train_inception_baseline():
     'loss': train_loss,
     }, checkpoint_path)
 
-  FLAGS['checkpoint_dir'] = f"checkpoints/{timestamp_when_start}/checkpoint_epoch{FLAGS['num_epochs']}"
+  FLAGS['checkpoint_dir'] = f"checkpoints/{timestamp_when_start}/checkpoint_epoch{FLAGS['num_epochs']}.pth"
 
 
 # The training loss and test accuracy will be logged to the TensorBoard. 

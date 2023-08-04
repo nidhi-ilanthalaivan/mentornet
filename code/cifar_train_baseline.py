@@ -54,27 +54,35 @@ def train_inception_baseline():
   # Format the date and time into the desired string format
   timestamp_when_start = current_datetime.strftime("%Y%m%d%H%M")
 
+  # Create a directory for saving model checkpoints
   checkpoint_dir = f"checkpoints/{timestamp_when_start}"
   os.makedirs(checkpoint_dir, exist_ok=True)
-  FLAGS['checkpoint_dir'] = checkpoint_dir
+  
+  # Create the directory for training logs if it doesn't exist
   if not os.path.exists(FLAGS['train_log_dir']):
     os.makedirs(FLAGS['train_log_dir'])
   
-
+  # Load the training data using the cifar_data_provider
   train_loader = cifar_data_provider.provide_cifarnet_data(train_or_test='train', batch_size=FLAGS['batch_size'])
   
+  # Create the CifarNet model with 10 output classes and specified dropout rate
   model = CifarNet(num_classes=10, dropout_keep_prob=FLAGS['dropout']) 
   
+  # Define the CrossEntropyLoss criterion for training
   criterion = nn.CrossEntropyLoss()
+  
+  # Define the SGD (Stochastic Gradient Descent) optimizer with specified learning rate and momentum
   optimizer = optim.SGD(model.parameters(), lr=FLAGS["learning_rate"], momentum=0.9)
 
-  # Set the device to CPU/GPU
+  # Set the device to CPU/GPU based on availability
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
   model.to(device)
 
-  #TB writer 
+  # Create a SummaryWriter for TensorBoard logging
   writer = SummaryWriter(log_dir = FLAGS["train_log_dir"])
 
+
+  # Main Training loop
   for epoch in tqdm(range(FLAGS['num_epochs'])):
     train_loss = 0.0
     for i, data in tqdm(enumerate(train_loader, 0)):
@@ -92,6 +100,8 @@ def train_inception_baseline():
         if i % 200 == 199:  # 
           writer.add_scalar(f'[Epoch {epoch + 1}, Batch {i + 1}], Loss/train', train_loss/200)
           train_loss = 0.0
+    
+    # Save model checkpoint at the end of each epoch
     checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_epoch{epoch + 1}.pth")
     torch.save({
     'epoch': epoch,
@@ -100,6 +110,7 @@ def train_inception_baseline():
     'loss': train_loss,
     }, checkpoint_path)
 
+  # Update the checkpoint directory with the final saved checkpoint
   FLAGS['checkpoint_dir'] = f"checkpoints/{timestamp_when_start}/checkpoint_epoch{FLAGS['num_epochs']}.pth"
 
 

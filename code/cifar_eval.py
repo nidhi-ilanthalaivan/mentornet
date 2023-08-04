@@ -25,19 +25,45 @@ from tqdm import tqdm
 import torch
 from cifar_train_baseline import FLAGS 
 
+# Function to evaluate the trained Inception model
 def eval_inception():
+  # Set the device to GPU if available, otherwise to CPU
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+  
+  # Load the model checkpoint
   checkpoint = torch.load(FLAGS["checkpoint_dir"])
+  
+  # Create the CifarNet model with 10 output classes
   model = CifarNet(num_classes=10)
+  
+  # Move the model to the chosen device (CPU/GPU)
   model.to(device)
+  
+  # Load the model's state dictionary from the checkpoint
   model.load_state_dict(checkpoint['model_state_dict'])
+  
+  # Set the model to evaluation mode (no gradient calculation)
   model.eval()
+  
+  # Load the test data using the cifar_data_provider
   test_loader = cifar_data_provider.provide_cifarnet_data(train_or_test='test', batch_size=FLAGS['batch_size'])
+  
+  # Variables to keep track of the evaluation metrics
   total_samples = 0
   correct_predictions = 0
   running_loss = 0.0
 
+  # Define the CrossEntropyLoss criterion for evaluation
   criterion = nn.CrossEntropyLoss()
+  
+  # Perform the evaluation
+  # `with torch.no_grad()` is used to disable gradient calculation during 
+  # the evaluation phase. When working with PyTorch, gradient calculation 
+  # is essential during the training phase, as it enables backpropagation 
+  # and parameter updates to improve the model. However, during the 
+  # evaluation or inference phase, we do not need to compute gradients, 
+  # as we are only interested in making predictions and evaluating the 
+  # model's performance on unseen data.
   with torch.no_grad():
       for inputs, labels in tqdm(test_loader, desc="Evaluating"):
           inputs, labels = inputs.to(device), labels.to(device)

@@ -32,13 +32,16 @@ def provide_cifarnet_data(train_or_test, batch_size):
   ## transforms.Normalize(mean = [0.485...]) normalizes tensor by subracts mean and dividing by the standard deviation 
     
   image_size = 32
+  
+  # Define the transformations to be applied to the images based on train or test mode
   transform = transforms.Compose([transforms.RandomCrop(image_size, padding = 4), 
                                   transforms.RandomHorizontalFlip(),
                                   transforms.ToTensor(), 
                                   transforms.Normalize(mean = [0.485, 0.456, 0.406], 
                                                       std = [0.229,0.224,0.225]),])
 
-  # preprocess the images.
+
+  # Load the training dataset
   if train_or_test == 'train':
     transform = transforms.Compose([
       transforms.RandomCrop(image_size, padding = 4), 
@@ -49,7 +52,8 @@ def provide_cifarnet_data(train_or_test, batch_size):
     train_dataset = torchvision.datasets.CIFAR10(root=str('./data') , train=True, download=True, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     return train_loader
-  else:
+  else: 
+    # Load the testing dataset
     transform = transforms.Compose([
       transforms.Resize((image_size, image_size)),
       transforms.ToTensor(), 

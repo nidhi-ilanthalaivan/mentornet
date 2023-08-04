@@ -20,25 +20,10 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 
-def truncated_normal(stddev): 
-  return torch.nn.init.normal_(torch.empty(stddev.size()), mean = 0, std = stddev)
+# def truncated_normal(stddev): 
+#   return torch.nn.init.normal_(torch.empty(stddev.size()), mean = 0, std = stddev)
 
 class CifarNet(nn.Module): 
-  def __init__(self, num_classes = 10, dropout_keep_prob = 0.5): 
-    super(CifarNet, self).__init__()
-    self.num_classes = num_classes
-    self.dropout_keep_prob = dropout_keep_prob
-    self.conv1 = nn.Conv2d(in_channels = 3, out_channels = 64, kernel_size = 5, stride = 1, padding = 2)
-    self.conv2 = nn.Conv2d(in_channels = 64, out_channels = 64, kernel_size = 5, stride = 1, padding = 2) 
-    self.pool1 = nn.MaxPool2d(kernel_size = 2, stride = 2)
-    self.pool2 = nn.MaxPool2d(kernel_size = 2, stride = 2)
-    self.norm1 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k=1.0)
-    self.norm2 = nn.LocalResponseNorm(size = 4, alpha = 0.001/9.0, beta = 0.75, k = 1.0)
-    self.fc3 = nn.Linear(8*8*64, 384)
-    self.fc4 = nn.Linear(384,192)
-    self.logits = nn.Linear(192, num_classes)
-    self.dropout3 = nn.Dropout(p=1 - self.dropout_keep_prob)
-
   """Creates a variant of the CifarNet model.
 
   Note that since the output is a set of 'logits', the values fall in the
@@ -65,38 +50,39 @@ class CifarNet(nn.Module):
     end_points: a dictionary from components of the network to the corresponding
       activation.
   """
+  
+  def __init__(self, num_classes = 10, dropout_keep_prob = 0.5): 
+    super(CifarNet, self).__init__()
+    self.num_classes = num_classes
+    self.dropout_keep_prob = dropout_keep_prob
+    self.conv1 = nn.Conv2d(in_channels=3, out_channels=64, kernel_size=5)
+    self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+    self.norm1 = nn.LocalResponseNorm(size=4, alpha=0.001 / 9.0, beta=0.75, k=1.0)
+    self.conv2 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=5)
+    self.norm2 = nn.LocalResponseNorm(size=4, alpha=0.001 / 9.0, beta=0.75, k=1.0)
+    self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+    self.fc3 = nn.Linear(64 * 5 * 5, 384)
+    self.fc4 = nn.Linear(384, 192)
+    self.logits = nn.Linear(192, num_classes)
+    self.dropout = nn.Dropout(p=dropout_keep_prob)
+
  
-
-# Turn on if the batch norm is used.
-#   batch_norm_params = {
-#     # Decay for the moving averages.
-#     'decay': 0.9997,
-#     # epsilon to prevent 0s in variance.
-#     'epsilon': 0.001,
-#     # collection containing the moving mean and moving variance.
-#     #'moving_vars': 'moving_vars',
-#   }
-
-#   with slim.arg_scope([slim.conv2d, slim.fully_connected],
-#                          normalizer_params=batch_norm_params,
-#                          normalizer_fn=slim.batch_norm):
   def forward(self, x): 
-  #first
+    #first
     x = F.relu(self.conv1(x))
     x = self.pool1(x)
     x = self.norm1(x)
-    end_points = {'conv1':x}
-#second 
+    #second 
     x = F.relu(self.conv2(x))
     x = self.pool2(x)
     x = self.norm2(x)
-    end_points['conv2'] = x
-  #flatten
-    x = torch.flatten(x,1)
-    end_points['Flatten'] = x
+    
+    #flatten
+    x = torch.flatten(x, 1)
   
     x = F.relu(self.fc3(x))
+    x = self.dropout(x)
     x = F.relu(self.fc4(x))
+    x = self.dropout(x)
     logits = self.logits(x)
-    x = self.dropout3(x)
-    return logits, end_points 
+    return logits 

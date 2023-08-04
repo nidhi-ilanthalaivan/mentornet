@@ -21,256 +21,90 @@ See the README.md file for compilation and running instructions.
 import os
 import time
 import cifar_data_provider
-import inception_model
-import resnet_model
-import cifar10_dataset
+from inception_model import CifarNet
 import torch 
 import torch.nn as nn
-import torch.optim 
-import tensorboard
+import torch.optim as optim
+import torchvision
 import torchvision.transforms as transforms 
 from torch.utils.tensorboard import SummaryWriter 
-import argparse
+from tqdm import tqdm
+import torchvision.models as models
+from datetime import datetime
 
-flags = tf.app.flags
+FLAGS = {
+  'batch_size': 64, # The number of images in each batch.
+  'train_log_dir': r'./train_logs/train',
+  'studentnet': 'inception',
+  'learning_rate': 0.05,
+  'learning_rate_decay_factor': 0.1,
+  'num_epochs': 1,
+  'num_epochs_per_decay': 10, #'Number of epochs after which learning rate decays.
+  'save_summaries_secs': 120, # The frequency with which summaries are saved, in seconds.
+  'save_interval_secs': 1200, # The frequency with which the model is saved, in seconds.
+  'dropout': 0.2,
+  'checkpoint_dir': "",
+}
 
-#flags.DEFINE_integer('batch_size', 128, 'The number of images in each batch.')
-
-flags.DEFINE_string('master', None, 'BNS name of the TensorFlow master to use.')
-
-#flags.DEFINE_string('data_dir', '', 'Data dir')
-
-#flags.DEFINE_string('train_log_dir', '', 'Directory to the save trained model.')
-
-flags.DEFINE_string('dataset_name', 'cifar10', 'cifar10 or cifar100')
-
-flags.DEFINE_string('studentnet', 'resnet101', 'inception or resnet101')
-
-#flags.DEFINE_float('learning_rate', 0.1, 'The learning rate')
-#flags.DEFINE_float('learning_rate_decay_factor', 0.1,
-                   #'learning rate decay factor.')
-
-flags.DEFINE_float('num_epochs_per_decay', 50,
-                   'Number of epochs after which learning rate decays.')
-
-flags.DEFINE_integer(
-    'save_summaries_secs', 120,
-    'The frequency with which summaries are saved, in seconds.')
-
-flags.DEFINE_integer(
-    'save_interval_secs', 1200,
-    'The frequency with which the model is saved, in seconds.')
-
-flags.DEFINE_integer('max_number_of_steps', 39000,
-                     'The maximum number of gradient steps.')
-
-flags.DEFINE_integer(
-    'ps_tasks', 0,
-    'The number of parameter servers. If the value is 0, then the parameters '
-    'are handled locally by the worker.')
-
-flags.DEFINE_integer(
-    'task', 0,
-    'The Task ID. This value is used when training with multiple workers to '
-    'identify each worker.')
-
-flags.DEFINE_string('device_id', '0', 'GPU device ID to run the job.')
-
-FLAGS = flags.FLAGS
-
-# turn this on if there are no log outputs
-tf.logging.set_verbosity(tf.logging.INFO)
-
-
-def resnet_train_step(sess, train_op, global_step, train_step_kwargs):
-  """Function that takes a gradient step and specifies whether to stop.
-
-  Args:
-    sess: The current session.
-    train_op: An `Operation` that evaluates the gradients and returns the
-      total loss.
-    global_step: A `Tensor` representing the global training step.
-    train_step_kwargs: A dictionary of keyword arguments.
-
-  Returns:
-    The total loss and a boolean indicating whether or not to stop training.
-
-  Raises:
-    ValueError: if 'should_trace' is in `train_step_kwargs` but `logdir` is not.
-  """
-  start_time = time.time()
-
-  total_loss = tf.get_collection('total_loss')[0]
-
-  _, np_global_step, total_loss_val = sess.run(
-      [train_op, global_step, total_loss])
-
-  time_elapsed = time.time() - start_time
-
-  if 'should_log' in train_step_kwargs:
-    if sess.run(train_step_kwargs['should_log']):
-      tf.logging.info('global step %d: loss = %.4f (%.3f sec/step)',
-                      np_global_step, total_loss_val, time_elapsed)
-
-  if 'should_stop' in train_step_kwargs:
-    should_stop = sess.run(train_step_kwargs['should_stop'])
-  else:
-    should_stop = False
-  return total_loss, should_stop
-
-
-def train_resnet_baseline(max_step_run):
-  """Trains the resnet baseline model.
-
-  Args:
-    max_step_run: The maximum number of gradient steps.
-  """
-  if not os.path.exists(FLAGS.train_log_dir):
-    os.makedirs(FLAGS.train_log_dir)
-  g = tf.Graph()
-
-  with g.as_default():
-    with tf.device(tf.train.replica_device_setter(FLAGS.ps_tasks)):
-      tf_global_step = tf.train.get_or_create_global_step()
-
-      # pylint: disable=line-too-long
-      images, one_hot_labels, num_samples_per_epoch, num_of_classes = cifar_data_provider.provide_resnet_data(
-          FLAGS.dataset_name,
-          'train',
-          FLAGS.batch_size,
-          dataset_dir=FLAGS.data_dir)
-
-      hps = resnet_model.HParams(
-          batch_size=FLAGS.batch_size,
-          num_classes=num_of_classes,
-          min_lrn_rate=0.0001,
-          lrn_rate=FLAGS.learning_rate,
-          num_residual_units=9,
-          use_bottleneck=False,
-          weight_decay_rate=0.0002,
-          relu_leakiness=0.1,
-          optimizer='mom')
-
-      images.set_shape([FLAGS.batch_size, 32, 32, 3])
-      tf.logging.info('num_of_example={}'.format(num_samples_per_epoch))
-
-      # Define the model:
-      resnet = resnet_model.ResNet(hps, images, one_hot_labels, mode='train')
-      logits = resnet.build_model()
-
-      # Specify the loss function:
-      total_loss = tf.nn.softmax_cross_entropy_with_logits(
-          labels=one_hot_labels, logits=logits)
-      total_loss = tf.reduce_mean(total_loss, name='xent')
-      total_loss += resnet.decay()  # decay
-      tf.add_to_collection('total_loss', total_loss)
-
-      decay_steps = int(
-          num_samples_per_epoch / FLAGS.batch_size * FLAGS.num_epochs_per_decay)
-
-      boundaries = [19531, 25000, 30000]
-      values = [FLAGS.learning_rate * t for t in [1, 0.1, 0.01, 0.001]]
-      lr = tf.train.piecewise_constant(tf_global_step, boundaries, values)
-      slim.summaries.add_scalar_summary(lr, 'learning_rate', print_summary=True)
-
-      lr = tf.train.exponential_decay(
-          FLAGS.learning_rate,
-          tf_global_step,
-          decay_steps,
-          FLAGS.learning_rate_decay_factor,
-          staircase=True)
-
-      slim.summaries.add_scalar_summary(
-          total_loss, 'total_loss', print_summary=True)
-
-      # Set up training.
-      trainable_variables = tf.trainable_variables()
-
-      grads = tf.gradients(total_loss, trainable_variables)
-
-      optimizer = tf.train.MomentumOptimizer(lr, momentum=0.9)
-
-      apply_op = optimizer.apply_gradients(
-          zip(grads, trainable_variables),
-          global_step=tf_global_step,
-          name='train_step')
-
-      train_ops = [apply_op] + resnet.extra_train_ops
-      train_op = tf.group(*train_ops)
-
-      saver = tf.train.Saver(max_to_keep=10, keep_checkpoint_every_n_hours=24)
-
-      # Run training.
-      slim.learning.train(
-          train_op=train_op,
-          train_step_fn=resnet_train_step,
-          logdir=FLAGS.train_log_dir,
-          master=FLAGS.master,
-          saver=saver,
-          is_chief=FLAGS.task == 0,
-          number_of_steps=max_step_run,
-          save_summaries_secs=FLAGS.save_summaries_secs,
-          save_interval_secs=FLAGS.save_interval_secs)
-
-
-def train_inception_baseline(max_step_run, args):
-  """Trains the inception baseline model.
-
-  Args:
-    max_step_run: The maximum number of gradient steps.
-  """
+def train_inception_baseline():
+  """Trains the inception baseline model."""
   
-  #Cifar10 dataset
-  cifar_dataset = cifar10_dataset(dataset_dir = args.data_dir, batch_size = args.batch_size)
-  #Inception model 
-  model = inception_model(num_classes = cifar_dataset.num_classes, dropout_keep_prob = 0.8)
+  current_datetime = datetime.now()
+
+  # Format the date and time into the desired string format
+  timestamp_when_start = current_datetime.strftime("%Y%m%d%H%M")
+
+  checkpoint_dir = f"checkpoints/{timestamp_when_start}"
+  os.makedirs(checkpoint_dir, exist_ok=True)
+  FLAGS['checkpoint_dir'] = checkpoint_dir
+  if not os.path.exists(FLAGS['train_log_dir']):
+    os.makedirs(FLAGS['train_log_dir'])
   
-  #Loss function 
+
+  train_loader = cifar_data_provider.provide_cifarnet_data(train_or_test='train', batch_size=FLAGS['batch_size'])
+  
+  model = CifarNet(num_classes=10, dropout_keep_prob=FLAGS['dropout']) 
+  
   criterion = nn.CrossEntropyLoss()
-  #optmizer 
-  optimizer = torch.optim.SGD(model.parameters(), lr = args.learning_rate, momentum = 0.9)
+  optimizer = optim.SGD(model.parameters(), lr=FLAGS["learning_rate"], momentum=0.9)
+
+  # Set the device to CPU/GPU
+  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+  model.to(device)
+
   #TB writer 
-  writer = SummaryWriter(log_dir = args.train_log_dir)
-  #loop training
-  for epoch in range(args.num_epochs): 
-    for step, (images, labels) in enumerate(cifar_dataset):
-      optimizer.zero_grad()
-    #Foward pass
-      logits = model(images)
-    #computed loss
-      loss = criterion(logits,labels)
-    #back pass/optimization 
-      loss.backward()
-      optimizer.step()
-    #logging 
-      writer.add_scalar('Loss', loss.item(), epoch * len(cifar_dataset) + step)
-  
-  writer.close()
-if __name__ == "__main__":
-  parser = argparse.ArgumentParser(description = "Train the Inception baseline model for CIFAR-10")
-  parser.add_argument("--data_dir", type = str, default = "./data", help = "Path to the CIFAR-10 dataset")
-  parser.add_argument("--batch_size", type = int, default = 128, help = "Batch size for training")
-  parser.add_argument("--learning_rate", type = float, default = 0.1, help = "Learning rate")
-  parser.add_argument("--num_epochs", type = int, default = 50, help = "Number of training epochs")
-  parser.add_argument("--train_log_dir", type = str, default = "./logs", help = "Directory to save training")
-  
-  args = parser.parse_args()
-  
+  writer = SummaryWriter(log_dir = FLAGS["train_log_dir"])
+
+  for epoch in tqdm(range(FLAGS['num_epochs'])):
+    train_loss = 0.0
+    for i, data in tqdm(enumerate(train_loader, 0)):
+        inputs, labels = data[0].to(device), data[1].to(device)
+
+        optimizer.zero_grad()
+
+        outputs = model(inputs)          
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+
+        train_loss += loss.item()
+
+        if i % 200 == 199:  # 
+          writer.add_scalar(f'[Epoch {epoch + 1}, Batch {i + 1}], Loss/train', train_loss/200)
+          train_loss = 0.0
+    checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_epoch{epoch + 1}.pth")
+    torch.save({
+    'epoch': epoch,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'loss': train_loss,
+    }, checkpoint_path)
+
+  FLAGS['checkpoint_dir'] = f"checkpoints/{timestamp_when_start}/checkpoint_epoch{FLAGS['num_epochs']}"
 
 
-  train_inception_baseline(max_step_run = 1000, args = args)
-  
-  
+# The training loss and test accuracy will be logged to the TensorBoard. 
+# To launch TensorBoard and visualize the training progress, run the following command in the terminal:
 
-def main(_):
-  os.environ['CUDA_VISIBLE_DEVICES'] = FLAGS.device_id
-  if FLAGS.studentnet == 'resnet101':
-    train_resnet_baseline(FLAGS.max_number_of_steps)
-  elif FLAGS.studentnet == 'inception':
-    train_inception_baseline(FLAGS.max_number_of_steps)
-  else:
-    tf.logging.error('unknown backbone student network %s', FLAGS.studentnet)
-
-
-if __name__ == '__main__':
-  tf.app.run()
+# `tensorboard --logdir=runs``
+# You can then access TensorBoard in your web browser at the given URL (e.g., http://localhost:6006/).

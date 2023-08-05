@@ -1,0 +1,7 @@
+checkpoints
+train_logs
+data
+stderr0.txt
+stdout0.txt
+*.pyc
+__pycache__

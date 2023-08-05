@@ -29,6 +29,9 @@ https://arxiv.org/pdf/1605.07146v1.pdf
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from collections import namedtuple
+import torch.optim as optim
+import numpy as np
 
 
 
@@ -60,7 +63,7 @@ class ResNet(nn.Module):
 
   def build_graph_unused(self):
     """Build a whole graph for the model."""
-    self.global_step = torch.nn.Parameter(torch.tensor(0), trainable=False)
+    self.global_step = torch.nn.Parameter(torch.tensor(0), requires_grad = False)
     self.build_model()
     if self.mode == 'train':
       self._build_train_op()
@@ -126,7 +129,7 @@ class ResNet(nn.Module):
     self.lrn_rate = torch.tensor(self.hps.lrn_rate, dtype = torch.float32)
 
 
-    trainable_variables = filter(lambda p: p.requires_grad, self.parameters())
+    trainable_parameters = filter(lambda p: p.requires_grad, self.parameters())
     optimizer = None
 
     if self.hps.optimizer == 'sgd':
@@ -137,7 +140,7 @@ class ResNet(nn.Module):
     self.optimizer = optimizer
 
   def _batch_norm(self, name, x):
-    """Batch normalization."""
+      """Batch normalization."""
       params_shape = [x.size()[-1]]
 
       beta = nn.Parameter(torch.zeros(params_shape))
@@ -227,7 +230,7 @@ class ResNet(nn.Module):
       if 'DW' in var.op.name:
         costs.append(torch.nn.functional.mse_loss(var, torch.zeros_like(var)))
 
-    return self.hps.weight_decay_rate * sum(costs))
+    return self.hps.weight_decay_rate * sum(costs)
 
   def _conv(self, name, x, filter_size, in_filters, out_filters, strides):
     """Convolution."""

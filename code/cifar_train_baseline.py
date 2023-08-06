@@ -36,7 +36,7 @@ FLAGS = {
   'batch_size': 64, # The number of images in each batch.
   'train_log_dir': r'./train_logs/train',
   'studentnet': 'inception',
-  'learning_rate': 0.05,
+  'learning_rate': 0.02,
   'learning_rate_decay_factor': 0.1,
   'num_epochs': 20,
   'num_epochs_per_decay': 10, #'Number of epochs after which learning rate decays.

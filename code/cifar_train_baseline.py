@@ -41,7 +41,7 @@ FLAGS = {
   'num_epochs': 30,
   'num_epochs_per_decay': 10, #'Number of epochs after which learning rate decays.
   'save_summaries_secs': 120, # The frequency with which summaries are saved, in seconds.
-  'save_interval_secs': 1200# The frequency with which the model is saved, in seconds.
+  'save_interval_secs': 1200, # The frequency with which the model is saved, in seconds.
   'dropout': 0.2,
   'checkpoint_dir': "",
 }

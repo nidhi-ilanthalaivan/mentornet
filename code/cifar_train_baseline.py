@@ -38,7 +38,7 @@ FLAGS = {
   'studentnet': 'inception',
   'learning_rate': 0.02,
   'learning_rate_decay_factor': 0.1,
-  'num_epochs': 20,
+  'num_epochs': 25,
   'num_epochs_per_decay': 10, #'Number of epochs after which learning rate decays.
   'save_summaries_secs': 120, # The frequency with which summaries are saved, in seconds.
   'save_interval_secs': 1200, # The frequency with which the model is saved, in seconds.

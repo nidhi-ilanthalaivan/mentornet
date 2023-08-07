@@ -44,8 +44,8 @@ def provide_cifarnet_data(train_or_test, batch_size):
   # Load the training dataset
   if train_or_test == 'train':
     transform = transforms.Compose([
-      transforms.RandomCrop(image_size, padding = 4), 
-      transforms.RandomHorizontalFlip(),
+      #transforms.RandomCrop(image_size, padding = 4), 
+      #transforms.RandomHorizontalFlip(),
       transforms.ToTensor(), 
       transforms.Normalize(mean = [0.485, 0.456, 0.406], 
                            std = [0.229,0.224,0.225]),])

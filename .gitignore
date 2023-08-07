@@ -5,3 +5,4 @@ stderr0.txt
 stdout0.txt
 *.pyc
 __pycache__
+data_snake

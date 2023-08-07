@@ -51,7 +51,7 @@ class CifarNet(nn.Module):
       activation.
   """
   
-  def __init__(self, num_classes = 10, dropout_keep_prob = 0.5): 
+  def __init__(self, num_classes = 3, dropout_keep_prob = 0.5):
     super(CifarNet, self).__init__()
     self.num_classes = num_classes
     self.dropout_keep_prob = dropout_keep_prob

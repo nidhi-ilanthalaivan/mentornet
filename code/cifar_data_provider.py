@@ -14,13 +14,73 @@
 # ==============================================================================
 
 """Contains code for loading and preprocessing the CIFAR data."""
-
-import cifar10_dataset
+import os
 import torch
 import torchvision.transforms as transforms
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, Dataset, random_split 
 import torch.nn as nn
 import torchvision
+import boto3
+import numpy as np
+
+
+  # Define Custom Dataset Class
+class CustomDataset(Dataset):
+    def __init__(self, state_sequences_file, action_sequences_file):
+        self.state_sequences = np.load(state_sequences_file, allow_pickle=True)
+        self.action_sequences = np.load(action_sequences_file)
+
+    def __len__(self):
+        return len(self.state_sequences)
+
+    def __getitem__(self, idx):
+        state_sequence = self.state_sequences[idx]
+        action_sequence = self.action_sequences[idx]
+        return {'state_sequence': state_sequence, 'action_sequence': action_sequence}
+      
+
+def provide_snake_data(train_or_test, batch_size):
+  aws_access_key_id=os.environ['aws_access_key_id'] 
+  aws_secret_access_key=os.environ['aws_secret_access_key'] 
+
+  session = boto3.Session(
+    aws_access_key_id=aws_access_key_id,
+    aws_secret_access_key=aws_secret_access_key
+)
+
+# Create an instance of the S3 client
+  s3 = session.client('s3')
+  bucket_name = 'snake-container'
+  
+  states_npy_path = 'data_snake/states.npy'
+  actions_npy_path = 'data_snake/actions.npy'
+  s3_state_key = 'dataset/states.npy'
+  s3_action_key = 'dataset/actions.npy'
+  s3.download_file(bucket_name, s3_state_key, states_npy_path)
+  s3.download_file(bucket_name, s3_action_key, actions_npy_path)
+
+
+    # Create an instance of your custom dataset
+  dataset = CustomDataset(states_npy_path, actions_npy_path)
+
+  # Define batch size and split ratio
+ 
+  train_ratio = 0.8  # 80% for training, 20% for testing
+
+  # Calculate split indices
+  train_size = int(train_ratio * len(dataset))
+  test_size = len(dataset) - train_size
+
+  # Split the dataset into training and testing sets
+  train_dataset, test_dataset = torch.utils.data.random_split(dataset, [train_size, test_size])
+
+
+  train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+  test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+  if train_or_test == 'train':
+    return train_loader
+  else:
+    return test_loader
 
 def provide_cifarnet_data(train_or_test, batch_size):
   """Provides batches of CIFAR images for cifarnet.""" 

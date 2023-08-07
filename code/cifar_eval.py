@@ -46,7 +46,7 @@ def eval_inception():
   model.eval()
   
   # Load the test data using the cifar_data_provider
-  test_loader = cifar_data_provider.provide_cifarnet_data(train_or_test='test', batch_size=FLAGS['batch_size'])
+  test_loader = cifar_data_provider.provide_snake_data(train_or_test='test', batch_size=FLAGS['batch_size'])
   
   # Variables to keep track of the evaluation metrics
   total_samples = 0
@@ -65,17 +65,19 @@ def eval_inception():
   # as we are only interested in making predictions and evaluating the 
   # model's performance on unseen data.
   with torch.no_grad():
-      for inputs, labels in tqdm(test_loader, desc="Evaluating"):
-          inputs, labels = inputs.to(device), labels.to(device)
+      
+    for batch in test_loader:
+        state_sequences = batch['state_sequence']
+        action_sequences = batch['action_sequence']
+    
+        outputs = model(state_sequences)
+        loss = criterion(outputs, action_sequences)
+        running_loss += loss.item()
 
-          outputs = model(inputs)
-          loss = criterion(outputs, labels)
-          running_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        total_samples += action_sequences.size(0)
+        correct_predictions += (predicted == action_sequences).sum().item()
 
-          _, predicted = torch.max(outputs.data, 1)
-          total_samples += labels.size(0)
-          correct_predictions += (predicted == labels).sum().item()
-
-      accuracy = correct_predictions / total_samples
-      avg_loss = running_loss / len(test_loader)
-      print(f"Accuracy on test dataset: {accuracy:.4f}, Avg Loss: {avg_loss:.4f}") # todo, recall, f1score,  interpretation
+        accuracy = correct_predictions / total_samples
+        avg_loss = running_loss / len(test_loader)
+        print(f"Accuracy on test dataset: {accuracy:.4f}, Avg Loss: {avg_loss:.4f}") # todo, recall, f1score,  interpretation

@@ -63,7 +63,7 @@ def train_inception_baseline():
     os.makedirs(FLAGS['train_log_dir'])
   
   # Load the training data using the cifar_data_provider
-  train_loader = cifar_data_provider.provide_cifarnet_data(train_or_test='train', batch_size=FLAGS['batch_size'])
+  train_loader = cifar_data_provider.provide_snake_data(train_or_test='train', batch_size=FLAGS['batch_size'])
   
   # Create the CifarNet model with 10 output classes and specified dropout rate
   model = CifarNet(num_classes=10, dropout_keep_prob=FLAGS['dropout']) 
@@ -85,20 +85,22 @@ def train_inception_baseline():
   # Main Training loop
   for epoch in tqdm(range(FLAGS['num_epochs'])):
     train_loss = 0.0
-    for i, data in tqdm(enumerate(train_loader, 0)):
-        inputs, labels = data[0].to(device), data[1].to(device)
 
+    for batch in train_loader:
+        state_sequences = batch['state_sequence']
+        action_sequences = batch['action_sequence']
+        
         optimizer.zero_grad()
-        outputs = model(inputs)          
-        loss = criterion(outputs, labels)
+        outputs = model(state_sequences)  
+        
+        # Flatten action sequences for loss calculation
+        flat_action_sequences = action_sequences.view(-1)
+                
+        loss = criterion(outputs, flat_action_sequences)
         loss.backward()
         optimizer.step()
 
         train_loss += loss.item()
-
-        if i % 200 == 199:  # 
-          writer.add_scalar(f'[Epoch {epoch + 1}, Batch {i + 1}], Loss/train', train_loss/200)
-          train_loss = 0.0
     
     # Save model checkpoint at the end of each epoch
     checkpoint_path = os.path.join(checkpoint_dir, f"checkpoint_epoch{epoch + 1}.pth")
